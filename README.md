@@ -1,21 +1,27 @@
-# __Dissolved Oxygen Estimation__
+# __Internal Structure Estimation__
+IN PRODUCTION
 
 ## Description
-IN PRODUCTION
-Estimate dissolved oxygen by Deep Learning
+Estimate internal structure of ocean by Deep Learning.
+
+## Development memo
+
+### Limitation
+- This estimation function is applied in the North Pacific Subtropical Gyre.
 
 ## Demo
 ```
-python impulso.py predict -e XXXX-XXXX-XXXX -m X -x X=DIR -y Y-DIR
+python impulso.py estimate -e XXXX-XXXX-XXXX -m X -x X=DIR -y Y-DIR
 ```
 
 ## Requirement
-tensorflow-gpu==1.4.0  
-Keras==2.1.4  
+CUDA8.0
+torch==1.0.1
+torchvision==0.2.2.post3
 
 ## Install
 ```
-git clone https://github.com/pystokes/do_estimation.git
+git clone https://github.com/pystokes/internal_structure.git
 ```
 
 ## Usage
@@ -51,3 +57,5 @@ python impulso.py predict -e EXPERIMENT-ID -m MODEL-ID -x INPUT_DIR -y OUTPUT_DI
 
 ## Author
 [LotFun](https://github.com/pystokes)
+
+## Specification

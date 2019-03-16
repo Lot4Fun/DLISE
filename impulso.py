@@ -63,9 +63,19 @@ class Impulso(object):
     def dataset(self):
         logger.info('Begin dataset of Impulso')
         aggregator = Aggregator(self.args.exec_type, self.hparams)
-        aggregator.load_data()
-        aggregator.save_data()
-        logger.info('DATA-ID: ' + aggregator.hparams[self.args.exec_type]['data_id'])
+        argo_info, pre_profiles, sal_profiles, tem_profiles = aggregator.generate_dataset()
+
+        # Create Database
+        argo_db = {}
+        argo_db['info'] = argo_info
+        argo_db['pre'] = pre_profiles
+        argo_db['sal'] = sal_profiles
+        argo_db['tem'] = tem_profiles
+
+        # Save as Pickle
+        aggregator.save_as_pickle(argo_db, 'argo.pkl')
+        aggregator.save_as_pickle(map_db, 'map.pkl')
+
         logger.info('End dataset of Impulso')
 
 
@@ -134,7 +144,7 @@ if __name__ == '__main__':
                         nargs=None,
                         default=None,
                         type=str,
-                        choices=['dataset', 'prepare', 'train', 'test', 'predict'])
+                        choices=['dataset', 'prepare', 'train', 'test', 'estimate'])
     parser.add_argument('-d', '--data_id',
                         help='Dataset ID',
                         nargs=None,
@@ -173,7 +183,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logger.info('Check args')
-    if args.exec_type == 'prepare':
+    if args.exec_type == 'dataset':
+        assert True # Add conditions later.
+    elif args.exec_type == 'prepare':
         assert args.data_id, 'DATA-ID must be specified.'
     elif args.exec_type == 'train':
         assert args.experiment_id, 'EXPERIMENT-ID must be specified.'
