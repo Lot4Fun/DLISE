@@ -11,7 +11,6 @@ import pandas as pd
 import netCDF4
 from tqdm import tqdm
 from .lib import utils
-import pickle
 from scipy import interpolate
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -27,28 +26,19 @@ IMPULSO_HOME = os.environ['IMPULSO_HOME']
 
 class Aggregator(object):
 
-    def __init__(self, exec_type, hparams):
+    def __init__(self, hparams):
         logger.info('Initialize Aggregator')
-        self.exec_type = exec_type
         self.hparams = hparams
-        self.hparams[exec_type]['data_id'] = utils.issue_id()
-        self.hparams[exec_type]['output_train'] = os.path.join(IMPULSO_HOME,
-                                                               'datasets',
-                                                               self.hparams[exec_type]['data_id'],
-                                                               'train')
-        self.hparams[exec_type]['output_test'] = os.path.join(IMPULSO_HOME, 'datasets', 'test')
-        self.hparams[exec_type]['output_predict'] = os.path.join(IMPULSO_HOME, 'datasets', 'predict')
-
-        logger.info('Check hparams.yaml')
-        utils.check_hparams(self.exec_type, self.hparams)
-
-        logger.info('Backup hparams.yaml and src')
-        utils.backup_before_run(self.exec_type, self.hparams)
+        self.data_id = utils.issue_id()
+        self.output_dir = Path(IMPULSO_HOME).joinpath(f'datasets/{self.data_id}')
+        self.output_argo = self.output_dir.joinpath(f'argo.pkl')
+        self.output_map = self.output_dir.joinpath(f'map.pkl')
+        logger.info('Save hyperparameter')
+        utils.save_hparams(self.output_dir, 'preprocess_hparams.yml', self.hparams)
         logger.info('End init of Aggregator')
 
 
     def generate_dataset(self):
-
         argo_info = []
         pre_profiles = []
         sal_profiles = []
@@ -56,11 +46,11 @@ class Aggregator(object):
         maps = []
 
         # Get SSH/SST data filename
-        ssh_files = Path(self.hparams['ssh_in_dir']).glob('*.nc')
-        sst_files = Path(self.hparams['sst_in_dir']).glob('*.nc')
+        ssh_files = Path(self.hparams['input_data']['ssh_in_dir']).glob('*.nc')
+        sst_files = Path(self.hparams['input_data']['sst_in_dir']).glob('*.nc')
 
         # Interpolate Argo profile by Akima method and crop related SSH/SST
-        for file in tqdm(Path(self.hparams['arg_in_dir']).glob('**/*.txt')):
+        for file in tqdm(Path(self.hparams['input_data']['argo_in_dir']).glob('**/*.txt')):
             
             # Read all lines
             with open(file, 'r') as f:
@@ -78,11 +68,15 @@ class Aggregator(object):
                 argo_date, argo_lat, argo_lon, n_layer = self.parse_argo_header(header)
 
                 # Caluculate number of days elapsed from reference date
-                n_days_elapsed = self.calc_days_elapsed(self.hparams['reference_date'], argo_date)
+                n_days_elapsed = self.calc_days_elapsed(argo_date, self.hparams['preprocess']['reference_date'])
 
                 # Get flags to check date and location of Argo and SSH/SST
                 is_in_region = self.check_lat_and_lon(argo_lat, argo_lon)
-                within_the_period = self.check_period(argo_date)
+                within_the_period = self.check_period(
+                    argo_date,
+                    self.hparams['argo_selection']['date']['min'],
+                    self.hparams['argo_selection']['date']['max']
+                )
                 ssh_file = self.check_file_existance(argo_date, ssh_files)
                 sst_file =  self.check_file_existance(argo_date, sst_files)
 
@@ -108,10 +102,10 @@ class Aggregator(object):
                     tem_profile.append(tem)
 
                 # Interpolate a profile by Akima method
-                pre_min = self.hparams['min_pressure_for_interpolation']
-                pre_max = self.hparams['max_pressure_for_interpolation']
-                pre_interval = self.hparams['pressure_interval_for_interpolation']
-                pre_interpolated = list(range(pre_min, pre_max+pre_interpolated, pre_interpolated))
+                pre_min = self.hparams['preprocess']['interpolation']['min_pressure']
+                pre_max = self.hparams['preprocess']['interpolation']['max_pressure']
+                pre_interval = self.hparams['preprocess']['interpolation']['pressure_interval']
+                pre_interpolated = list(range(pre_min, pre_max+pre_interval, pre_interval))
                 sal_interpolated = self.interpolate_by_akima(pre_profile, sal_profile, pre_min, pre_max, pre_interval)
                 tem_interpolated = self.interpolate_by_akima(pre_profile, tem_profile, pre_min, pre_max, pre_interval)
 
@@ -141,16 +135,14 @@ class Aggregator(object):
         return argo_date, argo_lat, argo_lon, n_layer
 
 
-    def calc_days_elapsed(ref_date='2000-01-01', current_date):
+    def calc_days_elapsed(self, current_date, ref_date='2000-01-01'):
         """
         Args:
             current_date: YYYYMMDD (String)
             ref_date:     YYYY-MM-DD (String)
         """
         argo_jd = sum(jdcal.gcal2jd(current_date[:4], current_date[4:6], current_date[6:]))
-
-        ref_year, ref_month, ref_day = ref_date.split('-')
-        ref_jd = sum(jdcal.gcal2jd(ref_year, ref_month, ref_day))
+        ref_jd = sum(jdcal.gcal2jd(ref_date.year, ref_date.month, ref_date.day))
         
         return int(argo_jd - ref_jd)
 
@@ -161,10 +153,10 @@ class Aggregator(object):
 
 
     def check_lat_and_lon(self, argo_lat, argo_lon):
-        lat_min = self.hparams['lat_min']
-        lat_max = self.hparams['lat_max']
-        lon_min = self.hparams['lon_min']
-        lon_max = self.hparams['lon_max']
+        lat_min = self.hparams['argo_selection']['latitude']['min']
+        lat_max = self.hparams['argo_selection']['latitude']['max']
+        lon_min = self.hparams['argo_selection']['longitude']['min']
+        lon_max = self.hparams['argo_selection']['longitude']['max']
 
         if (lat_min <= argo_lat <= lat_max) and (lon_min <= argo_lon <= lon_max):
             return True
@@ -172,11 +164,11 @@ class Aggregator(object):
             return False
 
 
-    def check_period(self, argo_date):
-        date_min = pd.to_datetime(self.hparams['date_min'])
-        date_max = pd.to_datetime(self.hparams['date_max'])
+    def check_period(self, current_date, date_min, date_max):
+        date_min = pd.to_datetime(date_min)
+        date_max = pd.to_datetime(date_max)
 
-        if date_min <= pd.to_datetime(argo_date) <= date_max:
+        if date_min <= pd.to_datetime(current_date) <= date_max:
             return True
         else:
             return False
@@ -184,7 +176,8 @@ class Aggregator(object):
 
     def check_file_existance(self, argo_date, files):
         for file in files:
-            if 'dm' + argo_date in file:
+            if 'dm' + argo_date in file.name:
+                print(file.name) #####
                 return file
         return False
 
@@ -194,12 +187,12 @@ class Aggregator(object):
         argo_lat = Decimal(str(argo_lat * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
         argo_lon = Decimal(str(argo_lon * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
 
-        zonal_dist = self.hparams['zonal_dist_in_degree']
-        meridional_dist = self.hparams['meridional_dist_in_degree']
+        zonal_dist = Decimal(int(self.hparams['preprocess']['crop']['zonal_distance_in_degree']))
+        meridional_dist = Decimal(int(self.hparams['preprocess']['crop']['meridional_distance_in_degree']))
 
         # Get min/max index of latitude and longitude
-        lat_min_idx, lat_max_idx = self.change_axis_to_index(argo_lat, meridional_dist, 'lat')
-        lon_min_idx, lon_max_idx = self.change_axis_to_index(argo_lon, zonal_dist, 'lon')
+        lat_min_idx, lat_max_idx = self.change_axis_to_index(argo_lat, meridional_dist, 'latitude')
+        lon_min_idx, lon_max_idx = self.change_axis_to_index(argo_lon, zonal_dist, 'longitude')
 
         # Load data
         map = netCDF4.Dataset(map_file, 'r')
@@ -233,10 +226,10 @@ class Aggregator(object):
     def change_axis_to_index(self, argo_axis, width, data_type):
         # Latitude  : index=0 -> -83.0 degree, index=691 -> 89.75 degree
         # Longitude : index=0 -> XX degree, index=1439 -> XX degree
-        if data_type == 'lat':
+        if data_type == 'latitude':
             min_idx = int(((argo_axis - width / 2) + 83) * 4)
             max_idx = int(((argo_axis + width / 2) + 83) * 4)
-        elif data_type == 'lon':
+        elif data_type == 'longitude':
             min_idx = int((argo_axis - width / 2) * 4)
             max_idx = int((argo_axis + width / 2) * 4)
         else:
@@ -244,14 +237,6 @@ class Aggregator(object):
         
         return min_idx, max_idx
 
-
-    def save_as_pickle(self, obj_to_save, save_name):
-        logger.info('Begin saving ' + save_name)
-        
-        with open(Path(self.hparams['out_dir']).joinpath(save_name), 'w') as out_argo:
-            pickle.dump(obj_to_save, out_argo)
-        
-        logger.info('End saving ' + save_name)
 
 
 if __name__ == '__main__':

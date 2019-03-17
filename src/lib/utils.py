@@ -5,6 +5,8 @@ import sys, os
 import copy, shutil, glob
 import yaml
 import datetime
+from pathlib import Path
+import pickle
 
 from logging import DEBUG, INFO
 from logging import getLogger
@@ -29,7 +31,7 @@ def update_hparams(hparams):
     logger.debug('Update hyperparameters.')
     pass
 
-
+"""
 def check_hparams(exec_type, hparams):
     
     logger.info('Check hparams keys')
@@ -73,12 +75,14 @@ def check_hparams(exec_type, hparams):
     logger.info('hparams.yaml is appropriate')
 
     return None
+"""
 
-
+"""
 def save_hparams(save_path, hparams):
     logger.debug(f'Save hyperparameters: {save_path}')
     with open(save_path, 'w') as f:
         yaml.dump(hparams, f, default_flow_style=False)
+"""
 
 
 def issue_id():
@@ -87,33 +91,18 @@ def issue_id():
     return id
 
 
-def backup_before_run(exec_type, hparams):
-    logger.debug('Backup conditions before run.')
+def save_hparams(output_dir, output_file, hparams):
+    logger.debug('Save hyperparameters.')
+    os.makedirs(output_dir, exist_ok=True)
+    with open(output_dir.joinpath(output_file), 'w') as f:
+        yaml.dump(hparams, f, default_flow_style=False)
 
-    if exec_type == 'dataset':
-        output_home = os.path.join(IMPULSO_HOME, f'datasets/{hparams[exec_type]["data_id"]}')
-        hparams_to_save = copy.deepcopy(hparams)
-        drop_keys = list(hparams.keys())
-        drop_keys.remove('dataset')
-        for key in drop_keys:
-            del hparams_to_save[key]
 
-    elif exec_type in ['prepare', 'train', 'test', 'predict']:
-        output_home = os.path.join(IMPULSO_HOME, f'experiments/{hparams["prepare"]["experiment_id"]}')
-        hparams_to_save = copy.deepcopy(hparams)
-        if exec_type == 'prepare':
-            del hparams_to_save['dataset']
-
-    else:
-        pass
-
-    os.makedirs(os.path.join(output_home, 'hparams'), exist_ok=True)
-    save_hparams(os.path.join(output_home, 'hparams/hparams.yaml'), hparams_to_save)
-    copy_from = os.path.join(IMPULSO_HOME, 'src')
-    copy_to = os.path.join(output_home, 'src')
-    if os.path.exists(copy_to):
-        shutil.rmtree(copy_to)
-    shutil.copytree(copy_from, copy_to)
+def save_as_pickle(obj_to_save, save_path):
+    logger.info('Begin saving ' + save_path.name)
+    with open(save_path, 'wb') as f:
+        pickle.dump(obj_to_save, f)
+    logger.info('End saving ' + save_path.name)
 
 
 if __name__ == '__main__':

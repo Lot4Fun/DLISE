@@ -1,0 +1,28 @@
+dataset:
+  input_data:
+    argo_in_dir: ../_data_storage/internal_structure/argo/decompressed
+    ssh_in_dir: ../_data_storage/internal_structure/ssh
+    sst_in_dir: ../_data_storage/internal_structure/sst
+  preprocess:
+    interpolation:
+      min_pressure: 10
+      max_pressure: 1000
+      pressure_interval: 10
+    reference_date: 2016-01-01
+    crop:
+      zonal_distance_in_degree: 4
+      meridional_distance_in_degree: 4
+  argo_selection:
+    latitude:
+      min: 0
+      max: 80
+    longitude:
+      min: 100
+      max: 260
+    date:
+      min: 2016-01-01
+      max: 2016-12-31
+  fix_data_split: True
+
+
+

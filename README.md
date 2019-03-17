@@ -15,7 +15,7 @@ python impulso.py estimate -e XXXX-XXXX-XXXX -m X -x X=DIR -y Y-DIR
 ```
 
 ## Requirement
-CUDA8.0
+Python 3.6
 torch==1.0.1
 torchvision==0.2.2.post3
 

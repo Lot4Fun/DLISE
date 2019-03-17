@@ -5,13 +5,12 @@
 import os
 os.environ['IMPULSO_HOME'] = os.path.dirname(os.path.abspath(__file__))
 
-import sys
-import json
+from pathlib import Path
 import datetime
-import glob
 import argparse
 import src.lib.utils as utils
 from src.Aggregator import Aggregator
+"""
 from src.Preparer import Preparer
 from src.Trainer import Trainer
 from src.Estimator import Estimator
@@ -19,17 +18,20 @@ from src.Evaluator import Evaluator
 
 from src.model.ImpulsoNet import ImpulsoNet
 
-from keras.models import load_model
-
+"""
 from logging import DEBUG, INFO
 from logging import getLogger, StreamHandler, FileHandler, Formatter
+
+# 採取的には消したいライブラリ
+import glob
+
 
 # Set HOME directory.
 IMPULSO_HOME = os.environ['IMPULSO_HOME']
 
 # Set loger.
 log_date = datetime.datetime.today().strftime('%Y%m%d')
-log_path = os.path.join(IMPULSO_HOME, f'log/log_{log_date}.log')
+log_path = Path(IMPULSO_HOME).joinpath(f'log/log_{log_date}.log')
 logger = getLogger('impulso')
 logger.setLevel(DEBUG)
 
@@ -49,20 +51,22 @@ logger.addHandler(file_handler)
 
 class Impulso(object):
 
-    def __init__(self, args, hparams_yaml='hparams.yaml'):
+    def __init__(self, args, hparams_yaml='hparams.yml'):
         logger.info('Begin init of Impulso')
         self.args = args
-        if self.args.exec_type in ['dataset', 'prepare']:
-            self.hparams_path = os.path.join(IMPULSO_HOME, f'hparams/{hparams_yaml}')
+        if self.args.exec_type == 'dataset':
+            self.hparams_path = Path(IMPULSO_HOME).joinpath(f'hparams/{hparams_yaml}')
+        elif self.args.exec_type == 'prepare':
+            self.hparams_path = Path(IMPULSO_HOME).joinpath(f'datasets/{self.args.data_id}/{hparams_yaml}')
         else:
-            self.hparams_path = os.path.join(IMPULSO_HOME, f'experiments/{self.args.experiment_id}/hparams/hparams.yaml')
+            self.hparams_path = Path(IMPULSO_HOME).joinpath(f'experiments/{self.args.experiment_id}/hparams/{hparams_yaml}')
         self.hparams = utils.load_hparams(self.hparams_path)
         logger.info('End init of Impulso')
 
 
     def dataset(self):
         logger.info('Begin dataset of Impulso')
-        aggregator = Aggregator(self.args.exec_type, self.hparams)
+        aggregator = Aggregator(self.hparams['dataset'])
         argo_info, pre_profiles, sal_profiles, tem_profiles, map_db = aggregator.generate_dataset()
 
         # Create Database
@@ -73,8 +77,17 @@ class Impulso(object):
         argo_db['tem'] = tem_profiles
 
         # Save as Pickle
-        aggregator.save_as_pickle(argo_db, 'argo.pkl')
-        aggregator.save_as_pickle(map_db, 'map.pkl')
+        utils.save_as_pickle(argo_db, aggregator.output_argo)
+        utils.save_as_pickle(map_db, aggregator.output_map)
+
+        # Show results
+        n_profiles, n_layers_of_profile = pre_profiles.shape
+        _, n_channel, n_lat_grid, n_lon_grid = map_db.shape
+        print(f'  - Number of prifiles: {n_profiles}')
+        print(f'  - Number of layers of a profile; {n_layers_of_profile}')
+        print(f'  - Number of meridional grids: {n_lat_grid}')
+        print(f'  - Number of zonal grids: {n_lon_grid}')
+        print(f'  - Number of channel: {n_channel}')
 
         logger.info('End dataset of Impulso')
 
@@ -204,7 +217,7 @@ if __name__ == '__main__':
     logger.info(args)
     
     logger.info('Begin main processes.')
-    impulso = Impulso(args, hparams_yaml='hparams.yaml')
+    impulso = Impulso(args, hparams_yaml='hparams.yml')
 
     if args.exec_type == 'dataset':
         impulso.dataset()
