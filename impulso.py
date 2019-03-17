@@ -63,7 +63,7 @@ class Impulso(object):
     def dataset(self):
         logger.info('Begin dataset of Impulso')
         aggregator = Aggregator(self.args.exec_type, self.hparams)
-        argo_info, pre_profiles, sal_profiles, tem_profiles = aggregator.generate_dataset()
+        argo_info, pre_profiles, sal_profiles, tem_profiles, map_db = aggregator.generate_dataset()
 
         # Create Database
         argo_db = {}
@@ -184,7 +184,9 @@ if __name__ == '__main__':
 
     logger.info('Check args')
     if args.exec_type == 'dataset':
-        assert True # Add conditions later.
+        # zonal/meridional_dist_in_degreeが0.5°単位になっていることのチェックを追加
+        # reference dateのフォーマットのチェックを追加
+        pass
     elif args.exec_type == 'prepare':
         assert args.data_id, 'DATA-ID must be specified.'
     elif args.exec_type == 'train':
