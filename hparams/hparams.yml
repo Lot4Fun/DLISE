@@ -15,13 +15,13 @@ dataset:
   argo_selection:
     latitude:
       min: 0
-      max: 80
+      max: 40
     longitude:
-      min: 100
-      max: 260
+      min: 140
+      max: 220
     date:
-      min: 2016-01-01
-      max: 2016-12-31
+      min: 2000-01-01
+      max: 2020-12-31
   fix_data_split: True
 
 

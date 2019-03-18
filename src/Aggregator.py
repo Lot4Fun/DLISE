@@ -34,7 +34,7 @@ class Aggregator(object):
         self.output_argo = self.output_dir.joinpath(f'argo.pkl')
         self.output_map = self.output_dir.joinpath(f'map.pkl')
         logger.info('Save hyperparameter')
-        utils.save_hparams(self.output_dir, 'preprocess_hparams.yml', self.hparams)
+        utils.save_hparams(self.output_dir, 'preprocess.yml', self.hparams)
         logger.info('End init of Aggregator')
 
 
@@ -46,8 +46,8 @@ class Aggregator(object):
         maps = []
 
         # Get SSH/SST data filename
-        ssh_files = Path(self.hparams['input_data']['ssh_in_dir']).glob('*.nc')
-        sst_files = Path(self.hparams['input_data']['sst_in_dir']).glob('*.nc')
+        ssh_files = list(Path(self.hparams['input_data']['ssh_in_dir']).glob('*.nc'))
+        sst_files = list(Path(self.hparams['input_data']['sst_in_dir']).glob('*.nc'))
 
         # Interpolate Argo profile by Akima method and crop related SSH/SST
         for file in tqdm(Path(self.hparams['input_data']['argo_in_dir']).glob('**/*.txt')):
@@ -177,7 +177,6 @@ class Aggregator(object):
     def check_file_existance(self, argo_date, files):
         for file in files:
             if 'dm' + argo_date in file.name:
-                print(file.name) #####
                 return file
         return False
 

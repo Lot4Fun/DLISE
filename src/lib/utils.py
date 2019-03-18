@@ -31,59 +31,6 @@ def update_hparams(hparams):
     logger.debug('Update hyperparameters.')
     pass
 
-"""
-def check_hparams(exec_type, hparams):
-    
-    logger.info('Check hparams keys')
-    if exec_type == 'dataset':
-        need_keys = ['random_seed', 'data_id', 'output_train', 'output_test', 'output_predict', 'input_path', 'test_split']
-    elif exec_type == 'prepare':
-        need_keys = ['data_id', 'experiment_id', 'output_path']
-    elif exec_type == 'train':
-        need_keys = ['fit', 'optimizer', 'model', 'batch_size', 'epochs', 'verbose', 
-                     'validation_split', 'shuffle', 'initial_epoch', 'callbacks']
-    elif exec_type == 'validate':
-        need_keys = ['input_path', 'output_path', 'model']
-    elif exec_type == 'test':
-        need_keys = ['input_path', 'output_path', 'model']
-    elif exec_type == 'predict':
-        need_keys = ['input_path', 'output_path', 'model']
-    else:
-        logger.error('Unappropriate exec_type in checking hparams')
-        sys.exit(1)
-
-    for key in hparams[exec_type].keys():
-        assert key in need_keys, f'key:{key} does not exist in hparams.yaml'
-        if key == 'fit':
-            for additional_key in hparams[exec_type]['fit']:
-                assert key in need_keys, f'key:{key} does not exist in fit in hparams.yaml'
-    
-    logger.info('Check hparams values')
-    if exec_type == 'dataset':
-        if os.path.exists(hparams[exec_type]['output_test']):
-            files = glob.glob(os.path.join(hparams[exec_type]['output_test'], '*'))
-            assert not files, 'test data directory is not empty.'
-    elif exec_type == 'prepare':
-        data_id = hparams[exec_type]['data_id']
-        assert data_id, 'data_id is unappropriate.'
-        assert os.path.exists(os.path.join(IMPULSO_HOME, f'datasets/{data_id}')), f'DATA-ID:{data_id} does not exist.'
-    elif exec_type == 'train':
-        experiment_id = hparams['prepare']['experiment_id']
-        assert experiment_id, 'experiment_id is unappropriate.'
-        assert os.path.exists(os.path.join(IMPULSO_HOME, 'experiments', f'{experiment_id}')), f'EXPERIMENT-ID:{experiment_id} does not exist.'
-
-    logger.info('hparams.yaml is appropriate')
-
-    return None
-"""
-
-"""
-def save_hparams(save_path, hparams):
-    logger.debug(f'Save hyperparameters: {save_path}')
-    with open(save_path, 'w') as f:
-        yaml.dump(hparams, f, default_flow_style=False)
-"""
-
 
 def issue_id():
     logger.debug('Generate issue ID.')
@@ -103,6 +50,63 @@ def save_as_pickle(obj_to_save, save_path):
     with open(save_path, 'wb') as f:
         pickle.dump(obj_to_save, f)
     logger.info('End saving ' + save_path.name)
+
+
+
+def copy_directory(from_dir, to_dir):
+    """
+    Copy 'from_dir' directory as 'to_dir'.
+    """
+    logger.debug('Copy directory.')
+    shutil.copytree(from_dir, to_dir)
+
+
+
+def create_default_hparams(output_path,
+                           input_h, input_w, input_c,
+                           output_n,
+                           num_workers=4,
+                           test_split=0.2,
+                           batch_size=128,
+                           epoch=100):
+    """
+    Create hparams.yml for train, test and estimate phase.
+    
+    Args:
+        output_path (str) : Output path of hparams.yml
+        input_h  (int)    : Height of input data
+        input_w  (int)    : Width of input data
+        input_c  (int)    : Channel of input data
+        output_n (int)    : Dimension of output data
+    """
+    logger.info('Create default hparams.yml')
+
+    # Hyperparameters for train
+    train_hparams = {}
+    train_hparams['input_h'] = input_h
+    train_hparams['input_w'] = input_w
+    train_hparams['input_c'] = input_c
+    train_hparams['output_n'] = output_n
+    train_hparams['num_workers'] = num_workers
+    train_hparams['test_split'] = test_split
+    train_hparams['batch_size'] = batch_size
+    train_hparams['epoch'] = epoch
+
+    # Hyperparameters of test
+    test_hparams = {}
+
+    # Hyperparameters of estimate
+    estimate_hparams = {}
+
+    # Save
+    hparams = {}
+    hparams['train'] = train_hparams
+    hparams['test'] = test_hparams
+    hparams['estimate'] = estimate_hparams
+    with open(output_path, 'w') as f:
+        yaml.dump(hparams, f, default_flow_style=False)
+
+    logger.info('Saved default hparams.yml')
 
 
 if __name__ == '__main__':

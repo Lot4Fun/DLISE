@@ -37,12 +37,6 @@ class Trainer(object):
             model_name = 'model.{epoch:05d}-{loss:.2f}-{acc:.2f}-{val_loss:.2f}-{val_acc:.2f}.hdf5'
             self.hparams[self.exec_type]['fit']['callbacks']['ModelCheckpoint']['hparams']['filepath'] = os.path.join(model_path, model_name)
 
-        logger.info('Check hparams.yaml')
-        utils.check_hparams(self.exec_type, self.hparams)
-
-        logger.info('Backup hparams.yaml and src')
-        utils.backup_before_run(self.exec_type, self.hparams)
-
         os.makedirs(os.path.join(self.output_home, 'models'), exist_ok=True)
         logger.info('End init of Trainer')
 

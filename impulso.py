@@ -10,8 +10,8 @@ import datetime
 import argparse
 import src.lib.utils as utils
 from src.Aggregator import Aggregator
-"""
 from src.Preparer import Preparer
+"""
 from src.Trainer import Trainer
 from src.Estimator import Estimator
 from src.Evaluator import Evaluator
@@ -89,13 +89,21 @@ class Impulso(object):
         print(f'  - Number of zonal grids: {n_lon_grid}')
         print(f'  - Number of channel: {n_channel}')
 
+        # Create default hparams.yml for train, test and estimate
+        utils.create_default_hparams(
+            Path(aggregator.output_dir).joinpath('hparams.yml'),
+            n_lat_grid, n_lon_grid, n_channel,
+            n_layers_of_profile
+        )
+
         logger.info('End dataset of Impulso')
 
 
     def prepare(self):
         logger.info('Begin prepare of Impuslo')
-        preparer = Preparer(self.args.exec_type, self.hparams, self.args.data_id)
-        logger.info('EXPERIMENT-ID: ' + preparer.hparams[self.args.exec_type]['experiment_id'])
+        preparer = Preparer()
+        preparer.session(self.args.data_id)
+        logger.info('EXPERIMENT-ID: ' + preparer.experiment_id)
         logger.info('End prepare of Impulso')
 
 
