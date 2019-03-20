@@ -6,7 +6,7 @@ Estimate internal structure of ocean by Deep Learning.
 This trial is apllied in the North Pacific Subtropical Gyre.
 
 ## Concept
-https://github.com/pystokes/internal_structure/documents/Conceptual_diagram.png
+![Concept](https://github.com/pystokes/internal_structure/documents/Conceptual_diagram.png)
 
 ## Demo
 ```
