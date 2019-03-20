@@ -11,8 +11,8 @@ import argparse
 import src.lib.utils as utils
 from src.Aggregator import Aggregator
 from src.Preparer import Preparer
-"""
 from src.Trainer import Trainer
+"""
 from src.Estimator import Estimator
 from src.Evaluator import Evaluator
 
@@ -109,15 +109,30 @@ class Impulso(object):
 
     def train(self):
         logger.info('Begin train of Impulso')
-        trainer = Trainer(self.args.exec_type, self.hparams, self.model, self.args.model_id)
-        trainer.load_data()
-        trainer.get_callbacks()
-        trainer.begin_train()
+
+        # hparamsでモデルのフルパスが指定されていれば（そのパスのモデルが存在すれば）それを読んで追加学習（-eは試行バージョン管理のために必須）
+        # -eだけ,もしくはhparamsのモデルのフルパスで指定しているモデルが存在しなければ，その試行IDで初期値から学習
+        trainer = Trainer(self.hparams['train'], self.args.experiment_id)
+        argo_info, argo_pre, argo_obj, map = utils.load_data(
+            Path(IMPULSO_HOME).joinpath(f'datasets/{train.hparams['data_id']}'),
+            trainer.hparams['objective_variable']
+        )
+        
+        train_data_loader, test_data_loader = utils.create_data_loader(
+            argo_info, argo_pre, argo_obj, map,
+            trainer.hparams['batch_size'],
+            trainer.hparams['shuffle'],
+            trainer.hparams['split_random_seed']
+        )
+
+        trainer.run(train_data_loader, test_data_loader)
+
         logger.info('End train of Impulso')
 
 
     def estimate(self):
         logger.info('Begin estimate of Impulso')
+        # -mオプションでモデルのフルパスが指定されていれば（そのパスのモデルが存在すれば）それを読んで推論
         print('BEGIN: ESTIMATE')
         estimator = Estimator(self.args.exec_type, self.hparams, self.model, self.args.x_dir, self.args.y_dir)
         estimator.load_data()
@@ -176,8 +191,8 @@ if __name__ == '__main__':
                         nargs=None,
                         default=None,
                         type=str)
-    parser.add_argument('-m', '--model_id',
-                        help='The number of model',
+    parser.add_argument('-m', '--model',
+                        help='Full path of model or Model ID',
                         nargs=None,
                         default=None,
                         type=int)

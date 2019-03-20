@@ -34,6 +34,9 @@ class Preparer(object):
         all_hparams['train']['data_id'] = data_id
         all_hparams['test']['data_id'] = data_id
 
+        # Make output directory
+        os.makedirs(self.output_dir.joinpath('models'), exist_ok=True)
+
         # Save
         utils.save_hparams(self.output_dir, 'hparams.yml', all_hparams)
         utils.copy_directory(Path(IMPULSO_HOME).joinpath('src'),self.output_dir.joinpath('src'))
