@@ -8,6 +8,7 @@ import datetime
 from pathlib import Path
 import pickle
 
+import torch
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 
@@ -132,10 +133,10 @@ def load_data(data_path, objective_variable='temperature'):
     logger.info(f'Load data: {data_path}')
 
     logger.info('Loading argo profiles')
-    with open(Path(data_path).joinpath('argo.pkl'), 'r') as f:
+    with open(Path(data_path).joinpath('argo.pkl'), 'rb') as f:
         argo = pickle.load(f)
     
-    with open(Path(data_path).joinpath('map.pkl'), 'r') as f:
+    with open(Path(data_path).joinpath('map.pkl'), 'rb') as f:
         map = pickle.load(f)
 
     logger.info(f'Finished loading data: {data_path}')

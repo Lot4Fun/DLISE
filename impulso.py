@@ -59,7 +59,7 @@ class Impulso(object):
         elif self.args.exec_type == 'prepare':
             self.hparams_path = Path(IMPULSO_HOME).joinpath(f'datasets/{self.args.data_id}/{hparams_yaml}')
         else:
-            self.hparams_path = Path(IMPULSO_HOME).joinpath(f'experiments/{self.args.experiment_id}/hparams/{hparams_yaml}')
+            self.hparams_path = Path(IMPULSO_HOME).joinpath(f'experiments/{self.args.experiment_id}/{hparams_yaml}')
         self.hparams = utils.load_hparams(self.hparams_path)
         logger.info('End init of Impulso')
 
@@ -113,13 +113,13 @@ class Impulso(object):
         # hparamsでモデルのフルパスが指定されていれば（そのパスのモデルが存在すれば）それを読んで追加学習（-eは試行バージョン管理のために必須）
         # -eだけ,もしくはhparamsのモデルのフルパスで指定しているモデルが存在しなければ，その試行IDで初期値から学習
         trainer = Trainer(self.hparams['train'], self.args.experiment_id)
-        argo_info, argo_pre, argo_obj, map = utils.load_data(
-            Path(IMPULSO_HOME).joinpath(f'datasets/{train.hparams['data_id']}'),
+        argo_info, argo_pre, argo_obj, map_data = utils.load_data(
+            Path(IMPULSO_HOME).joinpath(f'datasets/{trainer.hparams["data_id"]}'),
             trainer.hparams['objective_variable']
         )
         
         train_data_loader, test_data_loader = utils.create_data_loader(
-            argo_info, argo_pre, argo_obj, map,
+            argo_info, argo_pre, argo_obj, map_data,
             trainer.hparams['batch_size'],
             trainer.hparams['shuffle'],
             trainer.hparams['split_random_seed']
@@ -249,7 +249,7 @@ if __name__ == '__main__':
         impulso.prepare()
 
     elif args.exec_type == 'train':
-        impulso.load_model()
+        #impulso.load_model()
         impulso.train()
 
     elif args.exec_type == 'validate':

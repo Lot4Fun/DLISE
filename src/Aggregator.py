@@ -85,9 +85,11 @@ class Aggregator(object):
                     for _ in range(n_layer + 2):
                         lines.pop()
                     continue
+                """
                 else:
                     cropped_ssh = self.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
                     cropped_sst = self.crop_map(argo_lat, argo_lon, sst_file, 'sst')
+                """
 
                 # Skip line with data label (line of 'pr sa te')
                 lines.pop()
@@ -108,6 +110,18 @@ class Aggregator(object):
                 pre_interpolated = list(range(pre_min, pre_max+pre_interval, pre_interval))
                 sal_interpolated = self.interpolate_by_akima(pre_profile, sal_profile, pre_min, pre_max, pre_interval)
                 tem_interpolated = self.interpolate_by_akima(pre_profile, tem_profile, pre_min, pre_max, pre_interval)
+
+                # Skip a profile if extrapolation exists
+                """
+                本来は，補間前に圧力の最大・最小をチェックしてスキップするかしないかを判定する方がいい
+                """
+                if str(sum(tem_interpolated)) == 'nan':
+                    lines.pop()
+                    continue
+
+                # Crop SSH/SST
+                cropped_ssh = self.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
+                cropped_sst = self.crop_map(argo_lat, argo_lon, sst_file, 'sst')
 
                 # Store header data of Argo profile
                 argo_info.append([n_days_elapsed, argo_lat, argo_lon])
@@ -194,22 +208,22 @@ class Aggregator(object):
         lon_min_idx, lon_max_idx = self.change_axis_to_index(argo_lon, zonal_dist, 'longitude')
 
         # Load data
-        map = netCDF4.Dataset(map_file, 'r')
+        map_nc = netCDF4.Dataset(map_file, 'r')
 
         # Crop
         if data_type == 'ssh':
-            #scale_factor = map.variables['zos'].scale_factor
-            #add_offset = map.variables['zos'].add_offset
-            cropped = map.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+            #scale_factor = map_nc.variables['zos'].scale_factor
+            #add_offset = map_nc.variables['zos'].add_offset
+            cropped = map_nc.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
         elif data_type == 'sst':
-            #scale_factor = map.variables['thetao'].scale_factor
-            #add_offset = map.variables['thetao'].add_offset
-            cropped = map.variables['thetao'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+            #scale_factor = map_nc.variables['thetao'].scale_factor
+            #add_offset = map_nc.variables['thetao'].add_offset
+            cropped = map_nc.variables['thetao'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
         else:
             logger.info('Map data type is not appropriate. Use default type (SSH)')
-            #scale_factor = map.variables['zos'].scale_factor
-            #add_offset = map.variables['zos'].add_offset
-            cropped = map.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+            #scale_factor = map_nc.variables['zos'].scale_factor
+            #add_offset = map_nc.variables['zos'].add_offset
+            cropped = map_nc.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
 
         # Scale factor and offset
         """
