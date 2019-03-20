@@ -3,11 +3,10 @@ IN PRODUCTION
 
 ## Description
 Estimate internal structure of ocean by Deep Learning.
+This trial is apllied in the North Pacific Subtropical Gyre.
 
-## Development memo
-
-### Limitation
-- This estimation function is applied in the North Pacific Subtropical Gyre.
+## Concept
+https://github.com/pystokes/internal_structure/documents/Conceptual_diagram.png
 
 ## Demo
 ```
@@ -36,26 +35,15 @@ python impulso.py prepare -d DATA-ID
 ```
 
 ### Train
-To resume training, specify MODEL-ID.
+To resume training, specify MODEL_PATH.
 ```
-python impulso.py train -e EXPERIMENT-ID [-m MODEL-ID]
-```
-
-### Test
-```
-python impulso.py test -e EXPERIMENT-ID -m MODEL-ID
+python impulso.py train -e EXPERIMENT-ID [-m MODEL-PATH]
 ```
 
-### Predict
+### Estimate
 ```
-python impulso.py predict -e EXPERIMENT-ID -m MODEL-ID -x INPUT_DIR -y OUTPUT_DIR
+python impulso.py predict -m MODEL-PATH -x INPUT_DIR -y OUTPUT_DIR
 ```
-
-## License
-- Permitted: Private Use  
-- Forbidden: Commercial Use  
 
 ## Author
 [LotFun](https://github.com/pystokes)
-
-## Specification
