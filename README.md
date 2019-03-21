@@ -2,7 +2,7 @@
 IN PRODUCTION
 
 ## Description
-Estimate internal structure of ocean by Deep Learning.
+Estimate a vertical profile (Temperature/Salinity) of ocean from SSH/SST by Deep Learning.
 This trial is apllied in the North Pacific Subtropical Gyre.
 
 ## Concept
@@ -10,13 +10,13 @@ This trial is apllied in the North Pacific Subtropical Gyre.
 
 ## Demo
 ```
-python impulso.py estimate -e XXXX-XXXX-XXXX -m X -x X=DIR -y Y-DIR
+python impulso.py inference -m MODEL-PATH -m X -x X-DIR [-y Y-DIR]
 ```
 
 ## Requirement
-Python 3.6
-torch==1.0.1
-torchvision==0.2.2.post3
+Python 3.6  
+torch==1.0.1  
+torchvision==0.2.2.post3  
 
 ## Install
 ```
@@ -35,14 +35,14 @@ python impulso.py prepare -d DATA-ID
 ```
 
 ### Train
-To resume training, specify MODEL_PATH.
+To resume training, specify MODEL-PATH.
 ```
 python impulso.py train -e EXPERIMENT-ID [-m MODEL-PATH]
 ```
 
-### Estimate
+### Inference
 ```
-python impulso.py predict -m MODEL-PATH -x INPUT_DIR -y OUTPUT_DIR
+python impulso.py inference -m MODEL-PATH -x INPUT_DIR -y OUTPUT_DIR
 ```
 
 ## Author
