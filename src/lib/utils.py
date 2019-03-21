@@ -68,7 +68,7 @@ def create_default_hparams(output_path,
                            num_workers=4,
                            test_split=0.2,
                            batch_size=128,
-                           epoch=100):
+                           epoch=500):
     """
     Create hparams.yml for train, test and estimate phase.
     
@@ -95,6 +95,7 @@ def create_default_hparams(output_path,
     train_hparams['model_path'] = None
     train_hparams['objective_variable'] = 'temperature'
     train_hparams['split_random_seed'] = 0
+    train_hparams['period'] = 50
 
     # Hyperparameters of test
     test_hparams = {}
@@ -176,6 +177,11 @@ def create_data_loader(info, pre, obj, map, batch_size= 128, shuffle=True, split
     test_loader = DataLoader(ds_test, batch_size=batch_size, shuffle=False)
 
     return train_loader, test_loader
+
+
+def save_model(model, save_path):
+    torch.save(model.state_dict(), save_path)
+    return 'Model was saved'
 
 
 if __name__ == '__main__':

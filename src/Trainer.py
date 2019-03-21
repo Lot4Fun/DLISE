@@ -36,16 +36,16 @@ class Trainer(object):
         if self.hparams['model_path'] and os.path.exists(self.hparams['model_path']):
             self.model_path = self.hparams['model_path']
         else:
-            logger.info('Model path is not defined or existed in hparams. Use initial weights.')
-            self.model_path = None
+            self.model_path = False
 
         logger.info('End init of Trainer')
 
 
 
-    def train(self, data_loader, model_obj, optimizer, loss_fn, total_epoch, epoch, device):
+    def train(self, data_loader, model_obj, optimizer, loss_fn, device):
         
-        model_obj.train() # Set as train mode
+        # Set as train mode
+        model_obj.train()
 
         # Train in each mini-batch
         for infos, maps, targets in data_loader:
@@ -62,10 +62,10 @@ class Trainer(object):
             loss.backward() # Back propagation
             optimizer.step() # Update weights
         
-        print('Epoch [%d/%d], Loss: %.4f' % (epoch, total_epoch, loss.item()))
+        return loss.item()
 
 
-    def test(self, data_loader, trained_model, device):
+    def validate(self, data_loader, trained_model, device):
 
         trained_model.eval() # Set as estimation mode
 
@@ -73,52 +73,67 @@ class Trainer(object):
         data_size = 0
         sum_of_squared_error = 0
 
-        # Estimate in each mini-batch
-        with torch.no_grad(): # Not use gradient for estimation
+        # Not use gradient for inference
+        with torch.no_grad():
 
+            # Validate in each mini-batch
             for infos, maps, targets in data_loader:
 
                 # Send data to GPU dvice
                 infos = infos.to(device)
                 maps = maps.to(device)
-                targets = targets.to(device)
 
                 # Forward propagation
                 outputs = trained_model(maps, infos)
 
                 # Calculate error
-                sum_of_squared_error += np.square(targets - outputs).sum()
+                sum_of_squared_error += np.square(targets - outputs.to('cpu')).sum() # 'cpu' : RuntimeError: expected type torch.cuda.FloatTensor but got torch.FloatTensor
                 data_size += reduce(lambda x, y: x * y, targets.size())
 
-        # Output error for test data
-        print(f'\nAccuracy: {sum_of_squared_error / data_size}\n')
+        return sum_of_squared_error / data_size
 
 
-    def run(self, train_data_loader, test_data_loader):
+    def run(self, train_data_loader, validate_data_loader):
 
-        # 1. GPUの設定（PyTorchでは明示的に指定する必要がある）
+        # GPU setting
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(device)
+        logger.info(f'Device information: {device}')
 
-        # 6. モデル作成
+        # Create initial model
         model = DLModel(
             self.hparams['input_c'], self.hparams['input_h'], self.hparams['input_w'],
             self.hparams['output_n'],
             conv_kernel=3, max_pool_kernel=2
         ).to(device)
-        print(model) # ネットワークの詳細を確認用に表示
+        logger.info(model)
+        
+        # Load pre-trained model
+        if self.model_path:
+            logger.info(f'Loading model: {self.model_path}')
+            model.load_state_dict(torch.load(self.model_path))
+        else:
+            logger.info('Model path is not defined in hparams. Use initial weights.')
 
-        # 7. 損失関数を定義
+        # Define loss function
         loss_fn = nn.MSELoss()
 
-        # 8. 最適化手法を定義（ここでは例としてAdamを選択）
+        # Define a method of optimization
         optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-        # 9. 学習（エポック終了時点ごとにテスト用データで評価）
-        print('Begin train')
+        # Train and validate in each epoch
+        logger.info('Begin train')
         for epoch in range(1, self.hparams['epoch']+1):
-            self.train(train_data_loader, model, optimizer, loss_fn, self.hparams['epoch'], epoch, device)
-            self.test(test_data_loader, model, device)
+
+            # Train and validate
+            train_loss = self.train(train_data_loader, model, optimizer, loss_fn, device)
+            validate_MSE = self.validate(validate_data_loader, model, device)
+            logger.info(f'Epoch [{epoch:05}/{self.hparams["epoch"]:05}], Loss: {train_loss:.2f}, Val MSE: {validate_MSE:.2f}')
+
+            # Save model in each period
+            if epoch % self.hparams['period'] == 0:
+                save_path = self.output_dir.joinpath(f'models/model-{str(epoch).zfill(5)}.pth')
+                utils.save_model(model, save_path)
+                logger.info(f'Saved model at Epoch : {epoch:05}')
 
 
 if __name__ == '__main__':

@@ -85,11 +85,6 @@ class Aggregator(object):
                     for _ in range(n_layer + 2):
                         lines.pop()
                     continue
-                """
-                else:
-                    cropped_ssh = self.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
-                    cropped_sst = self.crop_map(argo_lat, argo_lon, sst_file, 'sst')
-                """
 
                 # Skip line with data label (line of 'pr sa te')
                 lines.pop()
@@ -124,6 +119,9 @@ class Aggregator(object):
                 cropped_sst = self.crop_map(argo_lat, argo_lon, sst_file, 'sst')
 
                 # Store header data of Argo profile
+                """
+                argo_latとargo_lonをグリッド化後の緯度・経度に変える必要がある
+                """
                 argo_info.append([n_days_elapsed, argo_lat, argo_lon])
 
                 # Store profiles

@@ -19,7 +19,7 @@ logger.setLevel(DEBUG)
 IMPULSO_HOME = os.environ['IMPULSO_HOME']
 
 
-class Estimator(object):
+class Inferencer(object):
 
     def __init__(self, exec_type, hparams, model, x_dir=None, y_dir=None):
         logger.info('Begin init of Estimator')

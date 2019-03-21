@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 class DLModel(nn.Module):
 
-    def __init__(self, in_c, in_h, in_w, out_size, conv_kernel=2, max_pool_kernel=2):
+    def __init__(self, in_c, in_h, in_w, out_size, conv_kernel=3, max_pool_kernel=2):
         """
         Convolutional Neural Network
         
@@ -23,29 +23,33 @@ class DLModel(nn.Module):
         super(DLModel, self).__init__()
 
         self.block1 = nn.Sequential(
-            nn.Conv2d(in_channels=in_c, out_channels=8, kernel_size=conv_kernel, padding=1),
+            nn.Conv2d(in_channels=in_c, out_channels=16, kernel_size=conv_kernel, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=8, out_channels=8, kernel_size=conv_kernel, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
-            nn.BatchNorm2d(8)
-        )
-        self.block2 = nn.Sequential(
-            nn.Conv2d(in_channels=8, out_channels=16, kernel_size=conv_kernel, padding=1),
+            nn.Conv2d(in_channels=16, out_channels=16, kernel_size=conv_kernel, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(in_channels=16, out_channels=16, kernel_size=conv_kernel, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
             nn.BatchNorm2d(16)
         )
+        self.block2 = nn.Sequential(
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
+            nn.BatchNorm2d(32)
+        )
         self.full_connection = nn.Sequential(
-            nn.Linear(in_features=16 * (in_h - 2) * (in_h - 2) + 3, out_features=1024), # '+3' means date, latitude and longitude
+            nn.Linear(in_features=32 * (in_h - 2) * (in_h - 2) + 3, out_features=2048), # '+3' means date, latitude and longitude
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(in_features=1024, out_features=1024),
+            nn.Linear(in_features=2048, out_features=2048),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(in_features=1024, out_features=out_size, bias=False)
+            nn.Linear(in_features=2048, out_features=out_size, bias=False)
         )
 
 
@@ -57,7 +61,7 @@ class DLModel(nn.Module):
         x = self.block2(x)
 
         # Change 2-D to 1-D
-        x = x.view(x.size(0), 16 * 15 * 15)
+        x = x.view(x.size(0), 32 * 15 * 15)
 
         # Full connection layers
         y = self.full_connection(torch.cat([x, infos], dim=1))
