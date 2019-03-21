@@ -42,7 +42,7 @@ python impulso.py train -e EXPERIMENT-ID [-m MODEL-PATH]
 
 ### Inference
 ```
-python impulso.py inference -m MODEL-PATH -x INPUT_DIR -y OUTPUT_DIR
+python impulso.py inference -m MODEL-PATH -x INPUT_DIR [-y OUTPUT_DIR]
 ```
 
 ## Author

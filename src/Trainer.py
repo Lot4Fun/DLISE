@@ -67,7 +67,7 @@ class Trainer(object):
 
     def validate(self, data_loader, trained_model, device):
 
-        trained_model.eval() # Set as estimation mode
+        trained_model.eval() # Set as inference mode
 
         # Define temporary variables to calculate accuracy
         data_size = 0

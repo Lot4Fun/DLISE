@@ -1,8 +1,8 @@
 dataset:
   input_data:
-    argo_in_dir: ../_data_storage/internal_structure/argo/decompressed
-    ssh_in_dir: ../_data_storage/internal_structure/ssh
-    sst_in_dir: ../_data_storage/internal_structure/sst
+    argo_in_dir: ../_data_storage/internal_structure/full_data/train_val/argo/decompressed
+    ssh_in_dir: ../_data_storage/internal_structure/full_data/train_val/ssh
+    sst_in_dir: ../_data_storage/internal_structure/full_data/train_val/sst
   preprocess:
     interpolation:
       min_pressure: 10

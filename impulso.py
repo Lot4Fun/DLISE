@@ -57,6 +57,8 @@ class Impulso(object):
             self.hparams_path = Path(IMPULSO_HOME).joinpath(f'datasets/{self.args.data_id}/{hparams_yaml}')
         elif self.args.exec_type == 'train':
             self.hparams_path = Path(IMPULSO_HOME).joinpath(f'experiments/{self.args.experiment_id}/{hparams_yaml}')
+        elif self.args.exec_type == 'inference':
+            self.hparams_path = self.args.hparams
         else:
             """
             要チェック
@@ -97,7 +99,10 @@ class Impulso(object):
         utils.create_default_hparams(
             Path(aggregator.output_dir).joinpath('hparams.yml'),
             n_lat_grid, n_lon_grid, n_channel,
-            n_layers_of_profile
+            n_layers_of_profile,
+            aggregator.hparams['preprocess']['reference_date'],
+            aggregator.hparams['argo_selection'],
+            aggregator.hparams['preprocess']['crop']
         )
 
         logger.info(f'DATA-ID: {aggregator.data_id}')
@@ -120,14 +125,17 @@ class Impulso(object):
         trainer = Trainer(self.hparams['train'], self.args.experiment_id)
 
         # Load data
-        argo_info, argo_pre, argo_obj, map_data = utils.load_data(
+        """
+        もし圧力のデータが必要なら，returnの第二引数を取得する
+        """
+        argo_info, _, argo_obj, map_data = utils.load_data(
             Path(IMPULSO_HOME).joinpath(f'datasets/{trainer.hparams["data_id"]}'),
             trainer.hparams['objective_variable']
         )
         
         # Create DataLoader
         train_data_loader, test_data_loader = utils.create_data_loader(
-            argo_info, argo_pre, argo_obj, map_data,
+            argo_info, argo_obj, map_data,
             trainer.hparams['batch_size'],
             trainer.hparams['shuffle'],
             trainer.hparams['split_random_seed']
@@ -141,15 +149,30 @@ class Impulso(object):
 
     def inference(self):
         logger.info('Begin inference of Impulso')
-        inferencer = Inferencer(self.args.model_path)
+        inferencer = Inferencer(self.hparams['inference'], self.args.model_path, self.args.x_dir, self.args.y_dir)
         
-        INPUT_DATA = inferencer.load_data(self.args.x_dir, self.args.y_dir)
-        OUPUT_RESULTS = inferencer.infer()
+        # Get array data
+        input_info, input_maps = inferencer.load_data()
 
-        utils.SAVE_RESULTS
+        # Get DataLoader
+        data_loader = utils.infer_data_loader(input_info, input_maps)
 
-        if EXISTS_TEST_DATA:
-            VISUALIZE
+        # Inference
+        output_generator = inferencer.infer(data_loader)
+        for output in output_generator:
+            print(output)
+
+
+
+
+
+
+
+
+
+
+
+
 
         logger.info('End inference of Impulso')
 
@@ -174,7 +197,7 @@ if __name__ == '__main__':
                         nargs=None,
                         default=None,
                         type=str)
-    parser.add_argument('-m', '--model',
+    parser.add_argument('-m', '--model_path',
                         help='Full path to the model file',
                         nargs=None,
                         default=None,
@@ -184,6 +207,11 @@ if __name__ == '__main__':
                         nargs=None,
                         default=1,
                         type=int)
+    parser.add_argument('-p', '--hparams',
+                        help='Path to hparams.yml',
+                        nargs=None,
+                        default=None,
+                        type=str)
     parser.add_argument('-x', '--x_dir',
                         help='Path to input data directory',
                         nargs=None,
@@ -192,7 +220,7 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--y_dir',
                         help='Path to output data directory',
                         nargs=None,
-                        default=None,
+                        default='',
                         type=str)
     parser.add_argument('-t', '--t_dir',
                         help='Path to ground truth data directory',
@@ -213,7 +241,6 @@ if __name__ == '__main__':
     elif args.exec_type == 'inference':
         assert args.model_path, 'MODEL-PATH must be specified.'
         assert args.x_dir, 'X_DIR must be specified'
-        assert args.y_dir, 'Y_DIR must be specified'
     else:
         pass
     logger.info(args)
@@ -231,7 +258,6 @@ if __name__ == '__main__':
         impulso.train()
 
     elif args.exec_type == 'inference':
-        impulso.load_model()
         impulso.inference()
     
     else:

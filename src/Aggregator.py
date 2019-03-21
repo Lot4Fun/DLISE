@@ -5,14 +5,12 @@ import sys
 import os
 from pathlib import Path
 import re
-import jdcal
 import numpy as np
 import pandas as pd
 import netCDF4
 from tqdm import tqdm
 from .lib import utils
 from scipy import interpolate
-from decimal import Decimal, ROUND_HALF_UP
 
 from logging import DEBUG
 from logging import getLogger
@@ -68,7 +66,7 @@ class Aggregator(object):
                 argo_date, argo_lat, argo_lon, n_layer = self.parse_argo_header(header)
 
                 # Caluculate number of days elapsed from reference date
-                n_days_elapsed = self.calc_days_elapsed(argo_date, self.hparams['preprocess']['reference_date'])
+                n_days_elapsed = utils.calc_days_elapsed(argo_date, self.hparams['preprocess']['reference_date'])
 
                 # Get flags to check date and location of Argo and SSH/SST
                 is_in_region = self.check_lat_and_lon(argo_lat, argo_lon)
@@ -122,7 +120,9 @@ class Aggregator(object):
                 """
                 argo_latとargo_lonをグリッド化後の緯度・経度に変える必要がある
                 """
-                argo_info.append([n_days_elapsed, argo_lat, argo_lon])
+                round_argo_lat = utils.round_location_in_grid(argo_lat)
+                round_argo_lon = utils.round_location_in_grid(argo_lon)
+                argo_info.append([n_days_elapsed, round_argo_lat, round_argo_lon])
 
                 # Store profiles
                 pre_profiles.append(pre_interpolated)
@@ -145,18 +145,6 @@ class Aggregator(object):
         n_layer = int(header[44:48])
 
         return argo_date, argo_lat, argo_lon, n_layer
-
-
-    def calc_days_elapsed(self, current_date, ref_date='2000-01-01'):
-        """
-        Args:
-            current_date: YYYYMMDD (String)
-            ref_date:     YYYY-MM-DD (String)
-        """
-        argo_jd = sum(jdcal.gcal2jd(current_date[:4], current_date[4:6], current_date[6:]))
-        ref_jd = sum(jdcal.gcal2jd(ref_date.year, ref_date.month, ref_date.day))
-        
-        return int(argo_jd - ref_jd)
 
 
     def interpolate_by_akima(self, pre_profile, obj_profile, min_pressure, max_pressure, interval):
@@ -195,59 +183,41 @@ class Aggregator(object):
 
     def crop_map(self, argo_lat, argo_lon, map_file, data_type='ssh'):
         # Round Argo's latitude and longitude to 0.25 units
-        argo_lat = Decimal(str(argo_lat * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
-        argo_lon = Decimal(str(argo_lon * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
+        argo_lat = utils.round_location_in_grid(argo_lat)
+        argo_lon = utils.round_location_in_grid(argo_lon)
+        #argo_lat = Decimal(str(argo_lat * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
+        #argo_lon = Decimal(str(argo_lon * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
 
-        zonal_dist = Decimal(int(self.hparams['preprocess']['crop']['zonal_distance_in_degree']))
-        meridional_dist = Decimal(int(self.hparams['preprocess']['crop']['meridional_distance_in_degree']))
+        zonal_dist = int(self.hparams['preprocess']['crop']['zonal_distance_in_degree'])
+        meridional_dist = int(self.hparams['preprocess']['crop']['meridional_distance_in_degree'])
 
         # Get min/max index of latitude and longitude
-        lat_min_idx, lat_max_idx = self.change_axis_to_index(argo_lat, meridional_dist, 'latitude')
-        lon_min_idx, lon_max_idx = self.change_axis_to_index(argo_lon, zonal_dist, 'longitude')
+        lat_min_idx, lat_max_idx = utils.get_minmax_index_from_degree(argo_lat, meridional_dist, 'latitude')
+        lon_min_idx, lon_max_idx = utils.get_minmax_index_from_degree(argo_lon, zonal_dist, 'longitude')
 
         # Load data
         map_nc = netCDF4.Dataset(map_file, 'r')
 
         # Crop
         if data_type == 'ssh':
-            #scale_factor = map_nc.variables['zos'].scale_factor
-            #add_offset = map_nc.variables['zos'].add_offset
             cropped = map_nc.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
         elif data_type == 'sst':
-            #scale_factor = map_nc.variables['thetao'].scale_factor
-            #add_offset = map_nc.variables['thetao'].add_offset
             cropped = map_nc.variables['thetao'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
         else:
             logger.info('Map data type is not appropriate. Use default type (SSH)')
-            #scale_factor = map_nc.variables['zos'].scale_factor
-            #add_offset = map_nc.variables['zos'].add_offset
             cropped = map_nc.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
 
         # Scale factor and offset
         """
         Add a process if need to use scale_factor and add_offset
+          - scale_factor = map_nc.variables['zos'].scale_factor
+          - add_offset = map_nc.variables['thetao'].add_offset
         """
 
         # Fill missilng values
         cropped[cropped.mask] = 0.0
 
         return cropped
-
-
-    def change_axis_to_index(self, argo_axis, width, data_type):
-        # Latitude  : index=0 -> -83.0 degree, index=691 -> 89.75 degree
-        # Longitude : index=0 -> XX degree, index=1439 -> XX degree
-        if data_type == 'latitude':
-            min_idx = int(((argo_axis - width / 2) + 83) * 4)
-            max_idx = int(((argo_axis + width / 2) + 83) * 4)
-        elif data_type == 'longitude':
-            min_idx = int((argo_axis - width / 2) * 4)
-            max_idx = int((argo_axis + width / 2) * 4)
-        else:
-            sys.exit('Error in "change_axis_to_index" function. Inappropriate "data_type"')
-        
-        return min_idx, max_idx
-
 
 
 if __name__ == '__main__':
