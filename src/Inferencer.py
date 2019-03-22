@@ -33,7 +33,7 @@ class Inferencer(object):
 
         # Set output directory
         if y_dir:
-            self.y_dir = y_dir
+            self.y_dir = Path(y_dir)
         else:
             self.y_dir = Path(IMPULSO_HOME).joinpath(f'tmp/{self.infer_id}')
         os.makedirs(self.y_dir, exist_ok=True)
@@ -56,6 +56,7 @@ class Inferencer(object):
 
         cropped_maps = []
         days_and_location = []
+        dates = []
 
         # Get date information
         current_date = netcdf_path.stem[-8:]
@@ -83,8 +84,9 @@ class Inferencer(object):
                 # Store data
                 cropped_maps.append(cropped)
                 days_and_location.append([days_elapsed, lat, lon])
+                dates.append(current_date)
         
-        return cropped_maps, days_and_location   
+        return cropped_maps, days_and_location, dates
 
 
     def load_data(self):
@@ -104,7 +106,7 @@ class Inferencer(object):
             if not (ssh_file.stem[-8:] == sst_file.stem[-8:]):
                 continue
 
-            ssh_crop_list, _ = self.get_array_data(
+            ssh_crop_list, _, _= self.get_array_data(
                 ssh_file,
                 self.hparams['region']['latitude']['min'],
                 self.hparams['region']['latitude']['max'],
@@ -114,7 +116,7 @@ class Inferencer(object):
                 self.hparams['crop_size']['zonal_distance_in_degree'],
                 data_type='ssh', grid_unit_in_degree=0.25)
 
-            sst_crop_list, info = self.get_array_data(
+            sst_crop_list, info, dates = self.get_array_data(
                 sst_file,
                 self.hparams['region']['latitude']['min'],
                 self.hparams['region']['latitude']['max'],
@@ -129,11 +131,12 @@ class Inferencer(object):
             input_info.extend(info)
 
             # Pack SSH and SST
+            logger.info('Packing SSH and SST...')
             input_maps = []
             for idx in range(len(ssh_cropped)):
                 input_maps.append([ssh_cropped[idx], sst_cropped[idx]])
 
-        return np.array(input_info), np.array(input_maps)
+        return np.array(input_info), np.array(input_maps), np.array(dates)
 
 
     def infer(self, data_loader):
@@ -171,7 +174,6 @@ class Inferencer(object):
                 output = model(maps, infos)
 
                 yield infos.to('cpu'), output.to('cpu')
-
 
 if __name__ == '__main__':
     """add"""

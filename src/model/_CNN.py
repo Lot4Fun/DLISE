@@ -23,34 +23,33 @@ class DLModel(nn.Module):
         super(DLModel, self).__init__()
 
         self.block1 = nn.Sequential(
-            nn.Conv2d(in_channels=in_c, out_channels=32, kernel_size=conv_kernel, padding=1),
+            nn.Conv2d(in_channels=in_c, out_channels=16, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=16, out_channels=16, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=16, out_channels=16, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
+            nn.BatchNorm2d(16)
+        )
+        self.block2 = nn.Sequential(
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=conv_kernel, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=conv_kernel, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(in_channels=32, out_channels=32, kernel_size=conv_kernel, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
             nn.BatchNorm2d(32)
         )
-        self.block2 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=conv_kernel, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=conv_kernel, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
-            nn.BatchNorm2d(64)
-        )
-        self.block3 = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=conv_kernel, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=conv_kernel, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=max_pool_kernel, stride=1),
-            nn.BatchNorm2d(64)
-        )
         self.full_connection = nn.Sequential(
-            nn.Linear(in_features=64 * (in_h - 3) * (in_h - 3) + 3, out_features=1024), # '+3' means date, latitude and longitude
+            nn.Linear(in_features=32 * (in_h - 2) * (in_h - 2) + 3, out_features=2048), # '+3' means date, latitude and longitude
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(in_features=1024, out_features=out_size, bias=False)
+            nn.Linear(in_features=2048, out_features=2048),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(in_features=2048, out_features=out_size, bias=False)
         )
 
 
@@ -60,10 +59,9 @@ class DLModel(nn.Module):
         # Convolutional layers
         x = self.block1(maps)
         x = self.block2(x)
-        x = self.block3(x)
 
         # Change 2-D to 1-D
-        x = x.view(x.size(0), 64 * 14 * 14)
+        x = x.view(x.size(0), 32 * 15 * 15)
 
         # Full connection layers
         y = self.full_connection(torch.cat([x, infos], dim=1))

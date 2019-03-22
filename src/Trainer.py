@@ -131,7 +131,7 @@ class Trainer(object):
 
             # Save model in each period
             if epoch % self.hparams['period'] == 0:
-                save_path = self.output_dir.joinpath(f'models/model-{str(epoch).zfill(5)}.pth')
+                save_path = self.output_dir.joinpath(f'models/{self.hparams["objective_variable"]}_model-{str(epoch).zfill(5)}.pth')
                 utils.save_model(model, save_path)
                 logger.info(f'Saved model at Epoch : {epoch:05}')
 

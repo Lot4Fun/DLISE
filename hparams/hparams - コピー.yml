@@ -1,8 +1,8 @@
 dataset:
   input_data:
-    argo_in_dir: ../_data_storage/internal_structure/sample_data/argo/decompressed
-    ssh_in_dir: ../_data_storage/internal_structure/sample_data/ssh
-    sst_in_dir: ../_data_storage/internal_structure/sample_data/sst
+    argo_in_dir: ../_data_storage/internal_structure/full_data/train_val/argo/decompressed
+    ssh_in_dir: ../_data_storage/internal_structure/full_data/train_val/ssh
+    sst_in_dir: ../_data_storage/internal_structure/full_data/train_val/sst
   preprocess:
     interpolation:
       min_pressure: 10
@@ -14,11 +14,11 @@ dataset:
       meridional_distance_in_degree: 4
   argo_selection:
     latitude:
-      min: 35
+      min: 0
       max: 40
     longitude:
       min: 140
-      max: 180
+      max: 220
     date:
       min: 2000-01-01
       max: 2020-12-31

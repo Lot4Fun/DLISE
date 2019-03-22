@@ -9,6 +9,7 @@ import datetime
 from pathlib import Path
 import pickle
 from decimal import Decimal, ROUND_HALF_UP
+import numpy as np
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
@@ -116,7 +117,8 @@ def calc_days_elapsed(current_date, ref_date='2000-01-01'):
     return int(argo_jd - ref_jd)
 
 
-def create_default_hparams(output_path,
+def create_default_hparams(dataset_hparams,
+                           output_path,
                            input_h, input_w, input_c,
                            output_n,
                            reference_date='2000-01-01',
@@ -134,6 +136,7 @@ def create_default_hparams(output_path,
                                'zonal_distance_in_degree':4,
                                'meridional_distance_in_degree':4
                            },
+                           objective_variable='temperature',
                            num_workers=4,
                            test_split=0.2,
                            batch_size=128,
@@ -162,7 +165,7 @@ def create_default_hparams(output_path,
     train_hparams['epoch'] = epoch
     train_hparams['shuffle'] = True
     train_hparams['model_path'] = None
-    train_hparams['objective_variable'] = 'temperature'
+    train_hparams['objective_variable'] = objective_variable
     train_hparams['split_random_seed'] = 0
     train_hparams['period'] = 50
 
@@ -178,6 +181,8 @@ def create_default_hparams(output_path,
     inference_hparams['input_w'] = input_w
     inference_hparams['input_c'] = input_c
     inference_hparams['output_n'] = output_n
+    inference_hparams['interpolation'] = dataset_hparams['preprocess']['interpolation']
+    inference_hparams['objective_variable'] = objective_variable
 
     # Save
     hparams = {}
@@ -266,6 +271,11 @@ def save_model(model, save_path):
     torch.save(model.state_dict(), save_path)
     return 'Model was saved'
 
+"""
+def save_numpy_file(npy_obj, output_path):
+    logger.info('fSave numpy file: {output_path}')
+    np.save(Path(output_path), npy_obj)
+"""
 
 if __name__ == '__main__':
     """

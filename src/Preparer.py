@@ -24,15 +24,16 @@ class Preparer(object):
         logger.info('End of init of Preparer')
 
 
-    def session(self, data_id):
+    def session(self, data_id, experiment_id):
         """
         Args:
             all_hparams : hparams.yml with parameters of train, test and estimate 
         """
-        # Load template_hparams.yml and add data_id
+        # Load hparams.yml and add IDs
         all_hparams = utils.load_hparams(Path(IMPULSO_HOME).joinpath(f'datasets/{data_id}/hparams.yml'))
         all_hparams['train']['data_id'] = data_id
-        all_hparams['test']['data_id'] = data_id
+        all_hparams['train']['experiment_id'] = experiment_id
+        all_hparams['inference']['experiment_id'] = experiment_id
 
         # Make output directory
         os.makedirs(self.output_dir.joinpath('models'), exist_ok=True)

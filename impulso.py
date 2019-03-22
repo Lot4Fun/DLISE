@@ -5,20 +5,17 @@
 import os
 os.environ['IMPULSO_HOME'] = os.path.dirname(os.path.abspath(__file__))
 
+import importlib
 from pathlib import Path
 import datetime
 import argparse
+import numpy as np
+from tqdm import tqdm
+
 import src.lib.utils as utils
 from src.Aggregator import Aggregator
 from src.Preparer import Preparer
-from src.Trainer import Trainer
-from src.Inferencer import Inferencer
-"""
-from src.Evaluator import Evaluator
 
-from src.model.ImpulsoNet import ImpulsoNet
-
-"""
 from logging import DEBUG, INFO
 from logging import getLogger, StreamHandler, FileHandler, Formatter
 
@@ -97,6 +94,7 @@ class Impulso(object):
 
         # Create default hparams.yml for train, test and estimate
         utils.create_default_hparams(
+            aggregator.hparams,
             Path(aggregator.output_dir).joinpath('hparams.yml'),
             n_lat_grid, n_lon_grid, n_channel,
             n_layers_of_profile,
@@ -113,7 +111,7 @@ class Impulso(object):
         logger.info('Begin prepare of Impuslo')
 
         preparer = Preparer()
-        preparer.session(self.args.data_id)
+        preparer.session(self.args.data_id, preparer.experiment_id)
 
         logger.info(f'EXPERIMENT-ID: {preparer.experiment_id}')
         logger.info('End prepare of Impulso')
@@ -122,7 +120,8 @@ class Impulso(object):
     def train(self):
         logger.info('Begin train of Impulso')
 
-        trainer = Trainer(self.hparams['train'], self.args.experiment_id)
+        Trainer = importlib.import_module(f'experiments.{self.args.experiment_id}.src.Trainer')
+        trainer = Trainer.Trainer(self.hparams['train'], self.args.experiment_id)
 
         # Load data
         """
@@ -149,30 +148,37 @@ class Impulso(object):
 
     def inference(self):
         logger.info('Begin inference of Impulso')
-        inferencer = Inferencer(self.hparams['inference'], self.args.model_path, self.args.x_dir, self.args.y_dir)
-        
-        # Get array data
-        input_info, input_maps = inferencer.load_data()
 
-        # Get DataLoader
+        #Inferencer = importlib.import_module(f'experiments.{self.args.experiment_id}.src.Inferencer')
+        #inferencer = Inferencer.Inferencer(self.hparams['inference'], self.args.model_path, self.args.x_dir, self.args.y_dir)
+        from src.Inferencer import Inferencer
+        inferencer = Inferencer(self.hparams['inference'], self.args.model_path, self.args.x_dir, self.args.y_dir)
+
+        # Get array data
+        input_info, input_maps, date_array = inferencer.load_data()
+
+        # Create DataLoader
         data_loader = utils.infer_data_loader(input_info, input_maps)
+
+        # Get pressure information
+        pre_min = inferencer.hparams['interpolation']['min_pressure']
+        pre_max = inferencer.hparams['interpolation']['max_pressure']
+        pre_interval = inferencer.hparams['interpolation']['pressure_interval']
 
         # Inference
         output_generator = inferencer.infer(data_loader)
-        for output in output_generator:
-            print(output)
 
+        with open(inferencer.y_dir.joinpath(f'{inferencer.hparams["objective_variable"]}.csv'), 'w') as f:
 
+            # Write header
+            f.write('Date,Days,Latitude,Longitude,Pressure,Variable\n')
 
-
-
-
-
-
-
-
-
-
+            for output, date in tqdm(zip(output_generator, date_array)):
+                info, profile = output
+                info = info[0]
+                profile = profile[0]
+                for pressure, obj_value in zip(range(pre_min, pre_max+pre_interval, pre_interval), profile):
+                    f.write(f'{date},{info[0]},{info[1]},{info[2]},{pressure},{obj_value}\n')
 
         logger.info('End inference of Impulso')
 

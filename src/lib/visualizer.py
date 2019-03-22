@@ -2,30 +2,23 @@
 # -*- encoding: UTF-8 -*-
 
 import os
+
 import numpy as np
-import cv2
-from PIL import Image
+import matplotlib.pyplot as plt
 
-def save_image(x_arr, y_arr, output_path):
+
+def lat_lon_grid(min_lat, max_lat, min_lon, max_lon, grid_unit=0.25):
+    max_lat += grid_unit
+    max_lon += grid_unit
+    x, y = np.mgrid[min_lat:max_lat:grid_unit, min_lon:max_lon:grid_unit]
+    return x, y
+
+
+def z_grid()
+
+def vertical_section(x_array, y_array, z_array):
     """
-    Args:
-        x: Array of resized original image.
-        y: Array of predicted result.
-        output_path: Output path with filename.
     """
-
-    x_image = Image.fromarray(x_arr)
-    x_image -= np.min(x_image)
-    x_image = np.minimum(x_image, 255)
-
-    y_image = Image.fromarray(y_arr)
-    heatmap = y_image / np.max(y_image)
-    y_image = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
-
-    output_image = np.float32(y_image) + np.float32(x_image)
-    output_image = 255 * output_image / np.max(output_image)
-
-    cv2.imwrite(output_path, output_image)
 
 
 if __name__ == '__main__':
