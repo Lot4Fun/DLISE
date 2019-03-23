@@ -185,8 +185,6 @@ class Aggregator(object):
         # Round Argo's latitude and longitude to 0.25 units
         argo_lat = utils.round_location_in_grid(argo_lat)
         argo_lon = utils.round_location_in_grid(argo_lon)
-        #argo_lat = Decimal(str(argo_lat * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
-        #argo_lon = Decimal(str(argo_lon * 4)).quantize(Decimal('0'), rounding=ROUND_HALF_UP) / 4
 
         zonal_dist = int(self.hparams['preprocess']['crop']['zonal_distance_in_degree'])
         meridional_dist = int(self.hparams['preprocess']['crop']['meridional_distance_in_degree'])
