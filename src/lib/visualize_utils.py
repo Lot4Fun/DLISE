@@ -18,20 +18,16 @@ def lon_degree2index(degree):
 def lat_lon_grid(min_lat, max_lat, min_lon, max_lon, grid_unit=0.25):
     max_lat += grid_unit
     max_lon += grid_unit
-    #grid_lon, grid_lat = np.mgrid[min_lat:max_lat:grid_unit, min_lon:max_lon:grid_unit]
+
     lat = np.arange(min_lat, max_lat, grid_unit)
     lon = np.arange(min_lon, max_lon, grid_unit)
+
     x, y = np.meshgrid(lon, lat)
 
-    #return grid_lon, grid_lat
     return x, y
 
 
-def z_grid():
-    pass
-
-
-def basemap(save_path, title, x_array, y_array, z_array, min_lat, max_lat, min_lon, max_lon, grid_unit):
+def draw_basemap(save_path, title, x_array, y_array, z_array, min_lat, max_lat, min_lon, max_lon, grid_unit):
 
     bmap = Basemap(
         projection='merc',
@@ -48,18 +44,36 @@ def basemap(save_path, title, x_array, y_array, z_array, min_lat, max_lat, min_l
     bmap.contourf(x_array, y_array, z_array)
     bmap.fillcontinents(color='lightgray', lake_color='white')
     #bmap.drawcoastlines(color='black')
-    bmap.drawmeridians(np.arange(0, 360, grid_unit), color='gray')
-    bmap.drawparallels(np.arange(-90, 90, grid_unit), color='gray')
+    bmap.drawmeridians(np.arange(min_lon, max_lon, 1), labels=[0,0,0,1], fontsize=4, color='gray')
+    bmap.drawparallels(np.arange(min_lat, max_lat, 1), labels=[1,0,0,0], fontsize=4, color='gray')
 
+    plt.title(title)
     plt.savefig(save_path, bbox_inches='tight')
     plt.clf()
 
-    """
-    # 3D-diagram
-    ax_3d = fig.add_subplot(122, projection='3d')
-    ax_3d.set_title('surface')
-    ax_3d.plot_surface(X, Y, Z)
-    """
+
+def pre_latlon_grid(min_pre, max_pre, min_latlon, max_latlon, pre_grid_unit, latlon_grid_unit):
+    max_pre += pre_grid_unit
+    max_latlon += latlon_grid_unit
+
+    pre = np.arange(min_pre, max_pre, pre_grid_unit)
+    latlon = np.arange(min_latlon, max_latlon, latlon_grid_unit)
+
+    x, y = np.meshgrid(latlon, pre)
+
+    return x, y
+
+
+def draw_vertical_cross_section(save_path, x, y, z):
+
+    plt.figure(figsize=(20,15))
+    plt.contourf(x, y, z)
+
+    
+    plt.ylim([1000, 10])
+
+    plt.savefig(save_path, bbox_inches='tight')
+    plt.clf()
 
 
 if __name__ == '__main__':
