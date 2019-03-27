@@ -114,9 +114,8 @@ class Visualizer(object):
 if __name__ == '__main__':
 
     visualizer = Visualizer()
-
     """
-    # Horizontal map
+    # SSH/SST
     visualizer.horizontal_map(
         'C:/Users/stokes/Documents/80_Project/github/_data_storage/internal_structure/infer_sample/ssh/metoffice_coupled_orca025_GL4_SSH_b20180103_dm20180101.nc',
         'C:/Users/stokes/Documents/80_Project/github/internal_structure/tmp/figure',
@@ -128,15 +127,15 @@ if __name__ == '__main__':
         grid_unit=0.25
     )
     """
-    """
     # Vertical Cross Section
     visualizer.vertical_cross_section(
         input_path='C:/Users/stokes/Documents/80_Project/github/internal_structure/tmp/0324-0947-2178/temperature.csv',
         save_dir='C:/Users/stokes/Documents/80_Project/github/internal_structure/tmp/figure',
         date='20180101',
-        lats=(30, 40),
-        lons=(154,),
+        lats=(23, ),
+        lons=(152,162),
         min_pre=10,
         max_pre=1000
     )
-    """
+
+    # Horizontal Cross Section

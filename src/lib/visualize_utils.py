@@ -41,15 +41,36 @@ def draw_basemap(save_path, title, x_array, y_array, z_array, min_lat, max_lat, 
 
     x_array, y_array = bmap(x_array, y_array)
 
-    bmap.contourf(x_array, y_array, z_array)
+    color_range = ssh_color_range(z_array, interval=0.1)
+
+    bmap.contourf(x_array, y_array, z_array, levels=color_range, cmap='jet')
+    bmap.contour(x_array, y_array, z_array, levels=color_range, linewidths=0.5, colors='black')
     bmap.fillcontinents(color='lightgray', lake_color='white')
-    #bmap.drawcoastlines(color='black')
-    bmap.drawmeridians(np.arange(min_lon, max_lon, 1), labels=[0,0,0,1], fontsize=4, color='gray')
-    bmap.drawparallels(np.arange(min_lat, max_lat, 1), labels=[1,0,0,0], fontsize=4, color='gray')
+    bmap.drawmeridians(np.arange(min_lon, max_lon, 1), labels=[0,0,0,1], fontsize=6, color='gray')
+    bmap.drawparallels(np.arange(min_lat, max_lat, 1), labels=[1,0,0,0], fontsize=6, color='gray')
 
     plt.title(title)
     plt.savefig(save_path, bbox_inches='tight')
     plt.clf()
+
+
+def ssh_color_range(z_array, interval=0.1):
+
+    if z_array.min() < 0:
+        color_min = (int(z_array.min() / interval) - 1) * interval
+    else:
+        color_min = (int(z_array * 10) + 1) * interval
+    color_max = (int(z_array.max() / interval) + 1) * interval
+
+    return np.arange(color_min, color_max+interval, interval)
+
+
+def tem_color_range(z_array, interval=1):
+
+    color_min = int(z_array.min())
+    color_max = int(z_array.max()) + 1
+
+    return np.arange(color_min, color_max+interval, interval)
 
 
 def pre_latlon_grid(min_pre, max_pre, min_latlon, max_latlon, pre_grid_unit, latlon_grid_unit):
@@ -67,7 +88,9 @@ def pre_latlon_grid(min_pre, max_pre, min_latlon, max_latlon, pre_grid_unit, lat
 def draw_vertical_cross_section(save_path, x, y, z):
 
     plt.figure(figsize=(20,15))
-    plt.contourf(x, y, z)
+    plt.contourf(x, y, z, levels=tem_color_range(z, interval=1), cmap='jet')
+    plt.contour(x, y, z, levels=tem_color_range(z, interval=1), linewidths=0.5, colors='black')
+    #plt.contour(x, y, z, levels=tem_color_range(z, interval=2), linewidths=1, colors='black')
 
     
     plt.ylim([1000, 10])
