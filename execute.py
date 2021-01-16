@@ -78,7 +78,12 @@ class Executor(object):
 
 
     def preprocess(self, n_process=None):
-        pass
+        
+        # Load file list for SSH, SST and Argo dataset
+
+        # Interpolate Argo dataset
+
+        # Crop map (SSH/SST)
 
 
     def load_model(self, gpu_id=None):

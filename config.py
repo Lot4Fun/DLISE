@@ -14,13 +14,15 @@ class Config(object):
 
         # Requirements : model
         # Requirements : preprocess
-        _preprocess_input_dir = '/path/to/VOC/format/directory'
+        _preprocess_ssh_input_dir = '/PTAH/TO/SSH/DIRECTORY'
+        _preprocess_sst_input_dir = '/PTAH/TO/SST/DIRECTORY'
+        _preprocess_argo_input_dir = '/PTAH/TO/ARGO/DIRECTORY'
         _preprocess_save_dir = None
         # Requirements : train
-        _train_input_dir = '../_data_storage/KITTI/KITTI_VOC'
+        _train_input_dir = '/PTAH/TO/DATA/DIRECTORY'
         _train_save_dir = None
         # Requirements : detect
-        _trained_weight_path = '/path/to/pretrained/weight/file'
+        _trained_weight_path = '/PATH/TO/PRETRAINED/WEIGHT/MODEL'
 
         self.model = {
             # General
