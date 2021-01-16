@@ -1,49 +1,87 @@
-# __Internal Structure Estimation__
-IN PRODUCTION
+# DLISE: Deep Learning Internal Structure Estimation
 
-## Description
-Estimate a vertical profile (Temperature/Salinity) of ocean from SSH/SST by Deep Learning.
-This trial is apllied in the North Pacific Subtropical Gyre.
+## Overview
 
-## Concept
-![Concept](https://github.com/pystokes/internal_structure/blob/master/documents/Conceptual_diagram.png)
-
-## Demo
-```
-python impulso.py inference -m MODEL-PATH -m X -x X-DIR [-y Y-DIR]
-```
+Estimate a vertical profile (Temperature/Salinity) of ocean from SSH/SST by Deep Learning. This trial is apllied in the North Pacific Subtropical Gyre.
 
 ## Requirement
-Python 3.6  
-torch==1.0.1  
-torchvision==0.2.2.post3  
+
+- Python 3.8
+- CUDA 10.2
 
 ## Install
+
+Clone this repository.
+
+```bash
+git clone https://github.com/pystokes/DLISE.git
 ```
-git clone https://github.com/pystokes/internal_structure.git
+
+Install necessary libraries.
+
+```bash
+cd DLISE
+pip install -r requirements.txt
 ```
 
 ## Usage
-### Create dataset
-```
-python impulso.py dataset
-```
 
-### Prepare
-```
-python impulso.py prepare -d DATA-ID
-```
+Only the following patterns to load trained weights are supported.
+
+|Support|Train on|Detect on|
+|:---:|:---:|:---:|
+|:heavy_check_mark:|Single-GPU|Single-GPU|
+|:heavy_check_mark:|Multi-GPU|Single-GPU|
+|Not supported|Single-GPU|Multi-GPU|
+|:heavy_check_mark:|Multi-GPU|Multi-GPU|
 
 ### Train
-To resume training, specify MODEL-PATH.
-```
-python impulso.py train -e EXPERIMENT-ID [-m MODEL-PATH]
-```
 
-### Inference
-```
-python impulso.py inference -m MODEL-PATH -x INPUT_DIR [-y OUTPUT_DIR]
-```
+1. Modify `Requirements` in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
 
-## Author
-[LotFun](https://github.com/pystokes)
+    ```python
+    ADD LATER
+    ```
+
+2. Set hyperparameters for train in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py).
+
+    ```python
+    ADD LATER
+    ```
+
+3. Run script in train mode.
+
+    ```bash
+    python execute.py train [-g GPU_ID]
+    ```
+
+    If train on multi-GPU, separate GPU IDs with commas.
+
+    ```bash
+    # Example: Use two GPUs (0 and 1)
+    python execute.py train -g 0,1
+    ```
+
+### Detect
+
+1. Set path to trained weights at the `trained_weight_path` in the `config.json` created in train phase.
+
+    ```python
+    ADD LATER
+    ```
+
+2. Change other configurations above `detect`. Especialy `conf_threshold` affects the final results of detection.
+
+3. Run script in detection mode.
+
+    ```bash
+    python execute.py detect -c /PATH/TO/config.json -x /INPUT/DIR [-y /OUTPUT/DIR]
+    ```
+
+## Data
+
+### Directory structure
+
+```text
+ADD LATER
+```
