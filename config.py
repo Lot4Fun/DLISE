@@ -16,6 +16,7 @@ class Config(object):
         # Requirements : preprocess
         _preprocess_ssh_input_dir = '/PTAH/TO/SSH/DIRECTORY'
         _preprocess_sst_input_dir = '/PTAH/TO/SST/DIRECTORY'
+        _preprocess_bio_input_dir = '/PTAH/TO/BIO/DIRECTORY'
         _preprocess_argo_input_dir = '/PTAH/TO/ARGO/DIRECTORY'
         _preprocess_save_dir = None
         # Requirements : train
@@ -26,14 +27,31 @@ class Config(object):
 
         self.model = {
             # General
-            'input_size': int(_model_type.split('_')[1]),
-            'variance': [0.1, 0.2],
-            'rgb_means': (104.0, 117.0, 123.0),
         }
 
         self.preproces = {
-            'input_dir': _preprocess_input_dir,
+            'ssh_input_dir': _preprocess_ssh_input_dir,
+            'sst_input_dir': _preprocess_sst_input_dir,
+            'bio_input_dir': _preprocess_bio_input_dir,
+            'arg_input_dir': _preprocess_argo_input_dir,
             'save_dir': _preprocess_save_dir,
+            'interpolation': {
+                'pre_min': 10, # Minimum pressure
+                'pre_max': 1000, # Maximum pressure
+                'pre_interval': 10 # Interval to interpolate
+            },
+            'crop': {
+                'zonal': 4, # -zonal to +zonal in degree
+                'meridioal': 4 # -meridional to +meridional in degree
+            },
+            'argo': { # Extract argo profiles in the following region and term
+                'lat_min': 35,
+                'lat_max': 40,
+                'lon_min': 140,
+                'lon_max': 180,
+                'dat_min': "2018-01-01",
+                'dat_max': "2021-01-17"                
+            }
         }
 
         self.train = {

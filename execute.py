@@ -17,6 +17,7 @@ from pathlib import Path
 # Third party library
 from attrdict import AttrDict
 import torch
+from tqdm import tqdm
 
 # Original library
 from config import Config
@@ -47,7 +48,7 @@ class Executor(object):
 
     def __init__(self, exec_type, config=None, y_dir=None):
 
-        assert exec_type in ['preprocess', 'train', 'detect'], 'exec_type is not correct.'
+        assert exec_type in ['preprocess', 'train', 'predict'], 'exec_type is not correct.'
 
         self.exec_type = exec_type
         if config:
@@ -71,19 +72,109 @@ class Executor(object):
             if y_dir:
                 self.save_dir = Path(y_dir)
             else:
-                self.save_dir = Path(DLISE_HOME).joinpath('results', 'detect', issue_id)
+                self.save_dir = Path(DLISE_HOME).joinpath('results', 'predict', issue_id)
 
         logger.info(f'Save directory: {self.save_dir}')
         CommonUtils.prepare(self.config, self.save_dir)
 
 
     def preprocess(self, n_process=None):
-        
-        # Load file list for SSH, SST and Argo dataset
 
-        # Interpolate Argo dataset
+        from libs.preprocessor import Preprocessor
 
-        # Crop map (SSH/SST)
+        preprocessor = Preprocessor(self.config)
+
+        ssh_files = list(Path(self.config['preprocess']['ssh_input_dir']).glob('*.nc'))
+        sst_files = list(Path(self.config['preprocess']['sst_input_dir']).glob('*.nc'))
+        bio_files = list(Path(self.config['preprocess']['bio_input_dir']).glob('*.nc'))
+        arg_files = list(Path(self.config['preprocess']['argo_input_dir']).glob('*.txt'))
+
+        # Interpolate Argo profile by Akima method and crop related SSH/SST
+        for arg_file in tqdm(arg_files):
+            
+            # Read all lines
+            with open(arg_file, 'r') as f:
+                lines = f.readlines()
+
+            # Reverse lines for pop() at the end of lines
+            #   - pop() at the begging of list is too slow
+            lines.reverse()
+
+            # Begin reading profiles
+            while lines:
+
+                # Get profile information
+                header = lines.pop()
+                argo_date, argo_lat, argo_lon, n_layer = preprocessor.parse_argo_header(header)
+
+                # Get flags to check date and location of Argo and SSH/SST
+                is_in_region = preprocessor.check_lat_and_lon(argo_lat, argo_lon)
+                within_the_period = preprocessor.check_period(
+                    argo_date,
+                    self.config['argo_selection']['date']['min'],
+                    self.config['argo_selection']['date']['max']
+                )
+                ssh_file = self.check_file_existance(argo_date, ssh_files)
+                sst_file =  self.check_file_existance(argo_date, sst_files)
+
+                # Skip a profile if related SSH/SST don't exists
+                if not (is_in_region and within_the_period and ssh_file and sst_file):
+                    for _ in range(n_layer + 2):
+                        lines.pop()
+                    continue
+
+                # Skip line with data label (line of 'pr sa te')
+                lines.pop()
+
+                # Get parameters of a profile
+                pre_profile, sal_profile, tem_profile = [], [], []
+                for _ in range(n_layer):
+                    line = lines.pop()
+                    pre, sal, tem = map(float, re.split(' +', line.replace('\n', '').lstrip(' ')))
+                    pre_profile.append(pre)
+                    sal_profile.append(sal)
+                    tem_profile.append(tem)
+
+                # Interpolate a profile by Akima method
+                pre_min = self.hparams['preprocess']['interpolation']['min_pressure']
+                pre_max = self.hparams['preprocess']['interpolation']['max_pressure']
+                pre_interval = self.hparams['preprocess']['interpolation']['pressure_interval']
+                pre_interpolated = list(range(pre_min, pre_max+pre_interval, pre_interval))
+                sal_interpolated = self.interpolate_by_akima(pre_profile, sal_profile, pre_min, pre_max, pre_interval)
+                tem_interpolated = self.interpolate_by_akima(pre_profile, tem_profile, pre_min, pre_max, pre_interval)
+
+                # Skip a profile if extrapolation exists
+                """
+                本来は，補間前に圧力の最大・最小をチェックしてスキップするかしないかを判定する方がいい
+                """
+                if str(sum(tem_interpolated)) == 'nan':
+                    lines.pop()
+                    continue
+
+                # Crop SSH/SST
+                cropped_ssh = self.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
+                cropped_sst = self.crop_map(argo_lat, argo_lon, sst_file, 'sst')
+
+                # Store header data of Argo profile
+                """
+                argo_latとargo_lonをグリッド化後の緯度・経度に変える必要がある
+                """
+                round_argo_lat = utils.round_location_in_grid(argo_lat)
+                round_argo_lon = utils.round_location_in_grid(argo_lon)
+                argo_info.append([n_days_elapsed, round_argo_lat, round_argo_lon])
+
+                # Store profiles
+                pre_profiles.append(pre_interpolated)
+                sal_profiles.append(sal_interpolated)
+                tem_profiles.append(tem_interpolated)
+
+                # Store SSH/SST
+                maps.append([cropped_ssh, cropped_sst])
+
+                # Skip separater (line of '**')
+                lines.pop()
+
+        return np.array(argo_info), np.array(pre_profiles), np.array(sal_profiles), np.array(tem_profiles), np.array(maps)
 
 
     def load_model(self, gpu_id=None):
@@ -122,7 +213,7 @@ class Executor(object):
         if self.exec_type == 'train':
             weight_path = self.config.train.resume_weight_path
         else:
-            weight_path = self.config.detect.trained_weight_path
+            weight_path = self.config.predict.trained_weight_path
             
         if Path(weight_path).exists() and Path(weight_path).suffix == '.pth':
             if on_multi_gpu:
@@ -152,15 +243,15 @@ class Executor(object):
         trainer.run(train_loader, validate_loader)
 
 
-    def detect(self, trained_model, device, x_dir, y_dir):
+    def predict(self, trained_model, device, x_dir, y_dir):
 
-        from libs.detector import Detector
+        from libs.predictor import Predictor
         from utils.data_loader import CreateDataLoader
 
-        data_loader = CreateDataLoader.build_for_detect(self.config, x_dir)
+        data_loader = CreateDataLoader.build_for_predict(self.config, x_dir)
 
-        detector = Detector(model, device, self.config, self.save_dir)
-        detector.run(data_loader)
+        predictor = Predictor(model, device, self.config, self.save_dir)
+        predictor.run(data_loader)
     
 
     def webcam(self):
@@ -175,7 +266,7 @@ if __name__ == '__main__':
                         nargs=None,
                         default=None,
                         type=str,
-                        choices=['preprocess', 'train', 'detect', 'webcam'])
+                        choices=['preprocess', 'train', 'predict', 'webcam'])
     parser.add_argument('-c', '--config',
                         help='Path to config.json',
                         nargs=None,
@@ -204,7 +295,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Validate arguments
-    if args.exec_type == 'detect':
+    if args.exec_type == 'predict':
         assert args.config, 'Configuration file is not specified.'
         assert args.x_dir, 'Input directory is not specified.'
 
@@ -229,8 +320,8 @@ if __name__ == '__main__':
         if args.exec_type == 'train':
             executor.train(model, device)
 
-        elif args.exec_type == 'detect':
-            executor.detect(model, device, args.x_dir, args.y_dir)
+        elif args.exec_type == 'predict':
+            executor.predict(model, device, args.x_dir, args.y_dir)
         
         elif args.exec_type == 'webcam':
             pass

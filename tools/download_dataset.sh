@@ -36,7 +36,11 @@ tty -s && echo
 echo ${cmems_id} ${cmems_pass}
 
 # Download SSH and SST
-types=("ssh" "sst" "bio")
+types='
+  ssh
+  sst
+  bio
+'
 for type in ${types}; do
 
   tmp_save_dir=${save_dir}/${type}
