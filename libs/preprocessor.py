@@ -19,12 +19,13 @@ class Preprocessor(object):
 
     def parse_argo_header(self, header):
 
+        wmo_id = header[8:15]
         argo_date = header[20:28]
         argo_lat = float(header[29:36])
         argo_lon = float(header[37:44])
         n_layer = int(header[44:48])
 
-        return argo_date, argo_lat, argo_lon, n_layer
+        return wmo_id, argo_date, argo_lat, argo_lon, n_layer
 
     def check_lat_and_lon(self, argo_lat, argo_lon):
 

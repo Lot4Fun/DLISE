@@ -2,10 +2,12 @@
 
 # Config: General
 save_dir="/archive/DLISE/download"/$(date "+%Y%m%d")
-# Config: CMEMS
+# Config: CMEMS (Home URLs)
 cmems_ssh_url="ftp://nrt.cmems-du.eu/Core/GLOBAL_ANALYSISFORECAST_PHY_CPL_001_015/MetO-GLO-PHY-CPL-dm-SSH"
 cmems_sst_url="ftp://nrt.cmems-du.eu/Core/GLOBAL_ANALYSISFORECAST_PHY_CPL_001_015/MetO-GLO-PHY-CPL-dm-TEM"
 cmems_bio_url="ftp://nrt.cmems-du.eu/Core/GLOBAL_ANALYSIS_FORECAST_BIO_001_028/global-analysis-forecast-bio-001-028-daily"
+# Config: CMEMS (Years to get sea surface data)
+#   Ex. Download data from ${cmems_ssh_url}/{$year} recursively
 years='
   2018
   2019

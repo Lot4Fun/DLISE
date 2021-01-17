@@ -65,7 +65,32 @@ Only the following patterns to load trained weights are supported.
 
 ### Download dataset
 
-Change configuratoin in [`tools/download_dataset.sh`](https://github.com/pystokes/DLISE/blob/master/tools/download_dataset.sh) and run following command. If you need to download CMEMS dataset, enter CMEMS ID and PASSWORD.
+Change configuratoin in [`tools/download_dataset.sh`](https://github.com/pystokes/DLISE/blob/master/tools/download_dataset.sh). See the shellscript file for examples.
+
+```bash
+# Config: General (Home directory to save downloaded data)
+save_dir="/PATH/TO/SAVE/DATA"
+# Config: CMEMS (FTP url to get sea surface data)
+cmems_ssh_url="FTP HOME URL"
+cmems_sst_url="FTP HOME URL"
+cmems_bio_url="FTP HOME URL"
+# Config: CMEMS (Years to get sea surface data)
+#   Ex. Download data from ${cmems_ssh_url}/{$year} recursively
+years='
+  YYYY
+  YYYY
+  YYYY
+  ...
+'
+# Config: Argo
+argo_urls='
+  LZH FILE 1
+  LZH FILE 2
+  LZH FILE 3
+'
+```
+
+Run following command. If you need to download CMEMS dataset, enter CMEMS ID and PASSWORD.
 
 ```bash
 cd DLISE/tools
@@ -73,6 +98,25 @@ sudo bash download_dataset.sh
 
 CMEMS ID: YOUR_ID
 CMEMS Password: YOUR_PASWORD
+```
+
+After running the above command, you can see directory structure in the specified save directory like below.
+
+```text
+{SAVE_HOME}
+   ├── Download_finished
+   ├── argo
+   │   ├── ARGO_FILE.txt
+   │   └── ...
+   ├── bio
+   │   ├── BIO_FILE.nc
+   │   └── ...
+   ├── ssh
+   │   ├── SSH_FILE.nc
+   │   └── ...
+   └── sst
+       ├── SST_FILE.nc
+       └── ...
 ```
 
 ### Preprocess

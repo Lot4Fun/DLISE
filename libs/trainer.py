@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from logging import getLogger
-import math
+
 import torch
+import torch.nn as nn
 from torch import optim
-from torch.autograd import Variable
-from model.modules.multi_box_loss import MultiBoxLoss
 from utils.common import CommonUtils
 from utils.optimizers import Optimizers
 
@@ -21,10 +20,9 @@ class Trainer(object):
         self.config = config
         self.save_dir = save_dir
 
-
     def run(self, train_loader, validate_loader):
 
-        loss_fn = MultiBoxLoss(self.config, self.device)
+        loss_fn =nn.MSELoss()
 
         optimizer = Optimizers.get_optimizer(self.config.train.optimizer, self.model.parameters())
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, self.config.train.optimizer.T_max)
@@ -55,51 +53,41 @@ class Trainer(object):
                 logger.info(f'Saved weight at Epoch : {epoch:05}')
 
 
-    def _train(self, loss_fn, optimizer, train_data_loader):
+    def _train(self, loss_fn, optimizer, train_loader):
 
         # Keep track of training loss
-        loc_loss = 0.
-        conf_loss = 0.
         train_loss = 0.
 
         # Train the model in each mini-batch
         self.model.train()
-        for mini_batch in train_data_loader:
+        for mini_batch in train_loader:
 
             # Send data to GPU dvice
-            if self.device.type == 'cuda':
-                images = mini_batch[0].to(self.device)
-                targets = [ann.to(self.device) for ann in mini_batch[1]]
-            else:
-                images = mini_batch[0]
-                targets = [ann for ann in mini_batch[1]]
+            input_lats = mini_batch[0].to(self.device)
+            input_lons = mini_batch[1].to(self.device)
+            input_maps = mini_batch[2].to(self.device)
+            targets = mini_batch[3].to(self.device)
 
             # Forward
             optimizer.zero_grad()
-            outputs = self.model(images)
-            loss_l, loss_c = loss_fn(outputs, targets)
-            loss = loss_l + loss_c
+            outputs = self.model(input_lats, input_lons, input_maps)
+            loss = loss_fn(outputs, targets)
 
             # Backward and update weights
             loss.backward()
             optimizer.step()
 
             # Update training loss
-            loc_loss += loss_l.item()
-            conf_loss += loss_c.item()
-
             train_loss += loss.item()
 
-        train_loss /= math.ceil(len(train_data_loader.dataset) / self.config.train.batch_size)
+        train_loss /= len(train_loader.dataset)
 
         return train_loss
 
 
-    def _validate(self, loss_fn, validate_data_loader):
+    def _validate(self, loss_fn, valid_loader):
 
         # Keep track of validation loss
-        loc_loss = 0.
-        conf_loss = 0.
         valid_loss = 0.0
 
         # Not use gradient for inference
@@ -107,26 +95,21 @@ class Trainer(object):
         with torch.no_grad():
 
             # Validate in each mini-batch
-            for mini_batch in validate_data_loader:
+            for mini_batch in valid_loader:
 
                 # Send data to GPU dvice
-                if self.device.type == 'cuda':
-                    images = Variable(mini_batch[0].to(self.device))
-                    targets = [ann.to(self.device) for ann in mini_batch[1]]
-                else:
-                    images = Variable(mini_batch[0])
-                    targets = [ann for ann in mini_batch[1]]
+                input_lats = mini_batch[0].to(self.device)
+                input_lons = mini_batch[1].to(self.device)
+                input_maps = mini_batch[2].to(self.device)
+                targets = mini_batch[3].to(self.device)
 
                 # Forward
-                outputs = self.model(images)
-                loss_l, loss_c = loss_fn(outputs, targets)
-                loss = loss_l + loss_c
+                outputs = self.model(input_lats, input_lons, input_maps)
+                loss = loss_fn(outputs, targets)
 
                 # Update validation loss
-                loc_loss += loss_l.item()
-                conf_loss += loss_c.item()
                 valid_loss += loss.item()
 
-        valid_loss /= math.ceil(len(validate_data_loader.dataset) / self.config.train.batch_size)
+        valid_loss /= len(valid_loader.dataset)
 
         return valid_loss

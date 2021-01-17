@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+from torchvision import models
 
 logger = getLogger('DLISE')
 
@@ -13,28 +14,44 @@ class DLISE(nn.Module):
 
     def __init__(self, exec_type, config):
 
-        super(SSD, self).__init__()
+        super(DLISE, self).__init__()
 
         self.exec_type = exec_type
         self.config = config
 
+        self.backbone = nn.Sequential(*list(models.resnet50(pretrained=self.config.model.backbone_pretrained).children())[:-1])
 
-    def forward(self, x):
+        self.fc_layers = nn.Sequential(
+            nn.Linear(in_features=2048, out_features=1024, bias=True),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(in_features=1024, out_features=512, bias=True),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(in_features=512, out_features=256, bias=True),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(in_features=256, out_features=100, bias=True)
+        )
 
-        return
+    def forward(self, lats, lons, maps):
 
+        x = self.backbone(maps)
+        x = x.view(x.size(0), -1)
+        x = self.fc_layers(x)
+
+        return x
 
     def init_weights(self):
 
-        self.base.load_state_dict(torch.load(self.config.model.basenet))
-        logger.info(f'Loaded backbone: {self.config.model.basenet}')
-
+        self.backbone.apply(self.init_conv_layer)
+        logger.info('Intialized backbone')
 
     def init_conv_layer(self, layer):
 
         if isinstance(layer, nn.Conv2d):
             self.xavier(layer.weight.data)
-            layer.bias.data.zero_()
+            #layer.bias.data.zero_()
 
 
     def xavier(self, param):

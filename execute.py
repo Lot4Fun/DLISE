@@ -94,7 +94,7 @@ class Executor(object):
 
         # Prepare a file to save argo information
         with open(self.save_dir.joinpath('db.csv'), 'w') as f:
-            f.write('data_id,date,latitude,longitude,rounded_latitude,rounded_longitude,data_split\n')
+            f.write('data_id,wmo_id,date,latitude,longitude,rounded_latitude,rounded_longitude,data_split\n')
 
         # Interpolate Argo profile by Akima method and crop related SSH/SST
         argo_id = 0
@@ -113,7 +113,7 @@ class Executor(object):
 
                 # Get profile information
                 header = lines.pop()
-                argo_date, argo_lat, argo_lon, n_layer = preprocessor.parse_argo_header(header)
+                wmo_id, argo_date, argo_lat, argo_lon, n_layer = preprocessor.parse_argo_header(header)
 
                 # Get flags to check date and location of Argo and SSH/SST
                 is_in_region = preprocessor.check_lat_and_lon(argo_lat, argo_lon)
@@ -174,6 +174,7 @@ class Executor(object):
                 with open(self.save_dir.joinpath('db.csv'), 'a') as f:
                     f.write(
                         str(argo_id).zfill(7)+','+
+                        str(wmo_id)+','+
                         str(argo_date)+','+
                         str(argo_lat)+','+
                         str(argo_lon)+','+
@@ -220,11 +221,6 @@ class Executor(object):
             model = torch.nn.DataParallel(model, device_ids=gpu_ids)
         # Model to GPU
         model = model.to(device)
-        # Priors to GPU
-        if on_multi_gpu:
-            model.module.priors = model.module.priors.to(device)
-        else:
-            model.priors = model.priors.to(device)
         logger.info(model)
         
         # Load pre-trained weight
