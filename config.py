@@ -14,10 +14,16 @@ class Config(object):
 
         # Requirements : model
         # Requirements : preprocess
+        """
         _preprocess_ssh_input_dir = '/PTAH/TO/SSH/DIRECTORY'
         _preprocess_sst_input_dir = '/PTAH/TO/SST/DIRECTORY'
         _preprocess_bio_input_dir = '/PTAH/TO/BIO/DIRECTORY'
         _preprocess_argo_input_dir = '/PTAH/TO/ARGO/DIRECTORY'
+        """
+        _preprocess_ssh_input_dir = '/archive/DLISE/download/20210117/ssh'
+        _preprocess_sst_input_dir = '/archive/DLISE/download/20210117/sst'
+        _preprocess_bio_input_dir = '/archive/DLISE/download/20210117/bio'
+        _preprocess_argo_input_dir = '/archive/DLISE/download/20210117/_argo'
         _preprocess_save_dir = None
         # Requirements : train
         _train_input_dir = '/PTAH/TO/DATA/DIRECTORY'
@@ -29,12 +35,13 @@ class Config(object):
             # General
         }
 
-        self.preproces = {
+        self.preprocess = {
             'ssh_input_dir': _preprocess_ssh_input_dir,
             'sst_input_dir': _preprocess_sst_input_dir,
             'bio_input_dir': _preprocess_bio_input_dir,
-            'arg_input_dir': _preprocess_argo_input_dir,
+            'argo_input_dir': _preprocess_argo_input_dir,
             'save_dir': _preprocess_save_dir,
+            'end_of_train': '2019-12-31',
             'interpolation': {
                 'pre_min': 10, # Minimum pressure
                 'pre_max': 1000, # Maximum pressure
@@ -42,15 +49,15 @@ class Config(object):
             },
             'crop': {
                 'zonal': 4, # -zonal to +zonal in degree
-                'meridioal': 4 # -meridional to +meridional in degree
+                'meridional': 4 # -meridional to +meridional in degree
             },
             'argo': { # Extract argo profiles in the following region and term
                 'lat_min': 35,
                 'lat_max': 40,
                 'lon_min': 140,
                 'lon_max': 180,
-                'dat_min': "2018-01-01",
-                'dat_max': "2021-01-17"                
+                'date_min': '2018-01-01',
+                'date_max': '2021-01-17'                
             }
         }
 
@@ -88,7 +95,7 @@ class Config(object):
 
         config = {
             'model': self.model,
-            'preprocess': self.preproces,
+            'preprocess': self.preprocess,
             'train': self.train,
             'detect': self.detect,
         }

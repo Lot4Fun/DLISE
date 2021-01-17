@@ -3,11 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-datasets/*
-experiments/*
+data_storage/*
+results/*
 log/*
-org/*
-tmp/*
 
 # Keep.
 !.gitkeep

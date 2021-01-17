@@ -16,6 +16,12 @@ class CommonUtils(object):
     @classmethod
     def prepare(self, config, save_dir):
         save_dir.mkdir(exist_ok=True, parents=True)
+        save_dir.joinpath('pressure').mkdir(exist_ok=True, parents=True)
+        save_dir.joinpath('temperature').mkdir(exist_ok=True, parents=True)
+        save_dir.joinpath('salinity').mkdir(exist_ok=True, parents=True)
+        save_dir.joinpath('ssh').mkdir(exist_ok=True, parents=True)
+        save_dir.joinpath('sst').mkdir(exist_ok=True, parents=True)
+        save_dir.joinpath('bio').mkdir(exist_ok=True, parents=True)
         with open(str(save_dir.joinpath('config.json')), 'w') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
 

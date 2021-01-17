@@ -13,9 +13,12 @@ import json
 from logging import DEBUG, INFO
 from logging import getLogger, StreamHandler, FileHandler, Formatter
 from pathlib import Path
+import re
 
 # Third party library
 from attrdict import AttrDict
+import numpy as np
+import pandas as pd
 import torch
 from tqdm import tqdm
 
@@ -84,12 +87,17 @@ class Executor(object):
 
         preprocessor = Preprocessor(self.config)
 
-        ssh_files = list(Path(self.config['preprocess']['ssh_input_dir']).glob('*.nc'))
-        sst_files = list(Path(self.config['preprocess']['sst_input_dir']).glob('*.nc'))
-        bio_files = list(Path(self.config['preprocess']['bio_input_dir']).glob('*.nc'))
-        arg_files = list(Path(self.config['preprocess']['argo_input_dir']).glob('*.txt'))
+        ssh_files = list(Path(self.config.preprocess.ssh_input_dir).glob('*.nc'))
+        sst_files = list(Path(self.config.preprocess.sst_input_dir).glob('*.nc'))
+        bio_files = list(Path(self.config.preprocess.bio_input_dir).glob('*.nc'))
+        arg_files = list(Path(self.config.preprocess.argo_input_dir).glob('*.txt'))
+
+        # Prepare a file to save argo information
+        with open(self.save_dir.joinpath('db.csv'), 'w') as f:
+            f.write('data_id,date,latitude,longitude,rounded_latitude,rounded_longitude,data_split\n')
 
         # Interpolate Argo profile by Akima method and crop related SSH/SST
+        argo_id = 0
         for arg_file in tqdm(arg_files):
             
             # Read all lines
@@ -111,14 +119,16 @@ class Executor(object):
                 is_in_region = preprocessor.check_lat_and_lon(argo_lat, argo_lon)
                 within_the_period = preprocessor.check_period(
                     argo_date,
-                    self.config['argo_selection']['date']['min'],
-                    self.config['argo_selection']['date']['max']
+                    self.config.preprocess.argo.date_min,
+                    self.config.preprocess.argo.date_max
                 )
-                ssh_file = self.check_file_existance(argo_date, ssh_files)
-                sst_file =  self.check_file_existance(argo_date, sst_files)
+                ssh_file = preprocessor.check_file_existance('ssh', argo_date, ssh_files)
+                sst_file = preprocessor.check_file_existance('sst', argo_date, sst_files)
+                #####bio_file = preprocessor.check_file_existance('bio', argo_date, bio_files)
+                bio_file = True
 
-                # Skip a profile if related SSH/SST don't exists
-                if not (is_in_region and within_the_period and ssh_file and sst_file):
+                # Skip a profile if some related data do not exist
+                if not (is_in_region and within_the_period and ssh_file and sst_file and bio_file):
                     for _ in range(n_layer + 2):
                         lines.pop()
                     continue
@@ -136,45 +146,53 @@ class Executor(object):
                     tem_profile.append(tem)
 
                 # Interpolate a profile by Akima method
-                pre_min = self.hparams['preprocess']['interpolation']['min_pressure']
-                pre_max = self.hparams['preprocess']['interpolation']['max_pressure']
-                pre_interval = self.hparams['preprocess']['interpolation']['pressure_interval']
+                pre_min = self.config.preprocess.interpolation.pre_min
+                pre_max = self.config.preprocess.interpolation.pre_max
+                pre_interval = self.config.preprocess.interpolation.pre_interval
                 pre_interpolated = list(range(pre_min, pre_max+pre_interval, pre_interval))
-                sal_interpolated = self.interpolate_by_akima(pre_profile, sal_profile, pre_min, pre_max, pre_interval)
-                tem_interpolated = self.interpolate_by_akima(pre_profile, tem_profile, pre_min, pre_max, pre_interval)
 
-                # Skip a profile if extrapolation exists
-                """
-                本来は，補間前に圧力の最大・最小をチェックしてスキップするかしないかを判定する方がいい
-                """
-                if str(sum(tem_interpolated)) == 'nan':
+                if pre_profile[0] > pre_interpolated[0] or pre_profile[-1] < pre_interpolated[-1]:
+                    # If extrapolation exists, do not use this profile
                     lines.pop()
                     continue
+                else:
+                    sal_interpolated = preprocessor.interpolate_by_akima(pre_profile, sal_profile, pre_min, pre_max, pre_interval)
+                    tem_interpolated = preprocessor.interpolate_by_akima(pre_profile, tem_profile, pre_min, pre_max, pre_interval)
 
                 # Crop SSH/SST
-                cropped_ssh = self.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
-                cropped_sst = self.crop_map(argo_lat, argo_lon, sst_file, 'sst')
+                cropped_ssh = preprocessor.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
+                cropped_sst = preprocessor.crop_map(argo_lat, argo_lon, sst_file, 'sst')
+
+                # Make argo location grid location
+                round_argo_lat = preprocessor.round_location_in_grid(argo_lat)
+                round_argo_lon = preprocessor.round_location_in_grid(argo_lon)
+
+                # Increment argo id to save all data with unique id
+                argo_id += 1
 
                 # Store header data of Argo profile
-                """
-                argo_latとargo_lonをグリッド化後の緯度・経度に変える必要がある
-                """
-                round_argo_lat = utils.round_location_in_grid(argo_lat)
-                round_argo_lon = utils.round_location_in_grid(argo_lon)
-                argo_info.append([n_days_elapsed, round_argo_lat, round_argo_lon])
+                with open(self.save_dir.joinpath('db.csv'), 'a') as f:
+                    f.write(
+                        str(argo_id).zfill(7)+','+
+                        str(argo_date)+','+
+                        str(argo_lat)+','+
+                        str(argo_lon)+','+
+                        str(round_argo_lat)+','+
+                        str(round_argo_lon)+','+
+                        ('train_val' if pd.to_datetime(argo_date) <= pd.to_datetime(self.config.preprocess.end_of_train) else 'test')+'\n'
+                    )
 
                 # Store profiles
-                pre_profiles.append(pre_interpolated)
-                sal_profiles.append(sal_interpolated)
-                tem_profiles.append(tem_interpolated)
+                np.save(self.save_dir.joinpath('pressure', str(argo_id).zfill(7)+'.npy'), np.array(pre_interpolated))
+                np.save(self.save_dir.joinpath('temperature', str(argo_id).zfill(7)+'.npy'), np.array(tem_interpolated))
+                np.save(self.save_dir.joinpath('salinity', str(argo_id).zfill(7)+'.npy'), np.array(sal_interpolated))
 
                 # Store SSH/SST
-                maps.append([cropped_ssh, cropped_sst])
+                cropped_ssh.dump(self.save_dir.joinpath('ssh', str(argo_id).zfill(7)+'.npy'))
+                cropped_sst.dump(self.save_dir.joinpath('sst', str(argo_id).zfill(7)+'.npy'))
 
                 # Skip separater (line of '**')
                 lines.pop()
-
-        return np.array(argo_info), np.array(pre_profiles), np.array(sal_profiles), np.array(tem_profiles), np.array(maps)
 
 
     def load_model(self, gpu_id=None):
