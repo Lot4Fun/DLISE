@@ -31,7 +31,7 @@ In addition to following system requeirements, you need to create [Copernicus Ma
     Cuda compilation tools, release 10.2, V10.2.89
     ```
 
-- lhasa (`lha` command is necessary to )
+- lhasa (`lha` command is necessary to decompress lzh files)
 
     ```bash
     sudo apt-get install lhasa
