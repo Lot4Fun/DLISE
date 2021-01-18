@@ -8,10 +8,10 @@ class Optimizers(object):
     @classmethod
     def get_optimizer(self, config, params):
 
-        return optim.SGD(params=params,
-                         lr=config.lr,
-                         momentum=config.momentum,
-                         weight_decay=config.weight_decay)
+        if config.optim_type == 'sgd':
+            return optim.SGD(params=params, **(config.sgd))
+        else:
+            return optim.Adam(params=params, **(config.adam))
 
 
 if __name__ == '__main__':

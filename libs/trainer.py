@@ -25,30 +25,20 @@ class Trainer(object):
         loss_fn =nn.MSELoss()
 
         optimizer = Optimizers.get_optimizer(self.config.train.optimizer, self.model.parameters())
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, self.config.train.optimizer.T_max)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10)
         
         logger.info('Begin training')
         for epoch in range(1, self.config.train.epoch+1):
 
-            enable_scheduler = (epoch > self.config.train.optimizer.wait_decay_epoch)
-            if epoch == self.config.train.optimizer.wait_decay_epoch + 1:
-                logger.info(f'Enable learning rate scheduler at Epoch: {epoch:05}')
-
-            # Warm restart
-            if enable_scheduler and (epoch % self.config.train.optimizer.T_max == 1):
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] = self.config.train.optimizer.lr
-
             train_loss = self._train(loss_fn, optimizer, train_loader)
-            val_loss = self._validate(loss_fn, validate_loader)
+            valid_loss = self._validate(loss_fn, validate_loader)
 
-            if enable_scheduler:
-                scheduler.step()
+            scheduler.step(valid_loss)
 
-            logger.info(f'Epoch [{epoch:05}/{self.config.train.epoch:05}], Loss: {train_loss:.5f}, Val Loss: {val_loss:.5f}')
+            logger.info(f'Epoch [{epoch:05}/{self.config.train.epoch:05}], Loss: {train_loss:.5f}, Val Loss: {valid_loss:.5f}')
 
             if epoch % self.config.train.weight_save_period == 0:
-                save_path = self.save_dir.joinpath('weights', f'weight-{str(epoch).zfill(5)}_{train_loss:.5f}_{val_loss:.5f}.pth')
+                save_path = self.save_dir.joinpath('weights', f'weight-{str(epoch).zfill(5)}_{train_loss:.5f}_{valid_loss:.5f}.pth')
                 CommonUtils.save_weight(self.model, save_path)
                 logger.info(f'Saved weight at Epoch : {epoch:05}')
 

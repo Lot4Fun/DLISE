@@ -97,6 +97,16 @@ class CreateDataLoader(object):
 
     @classmethod
     def build_for_predict(self, config, x_dir):
+
+        date_list = []
+        tem_list = []
+        sal_list = []
+        ssh_list = []
+        sst_list = []
+        #bio_list = []        
+
+
+
         """
         inputs = [img_path for img_path in Path(x_dir).glob('*') if re.fullmatch('.jpg|.jpeg|.png', img_path.suffix.lower())]
 

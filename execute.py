@@ -262,6 +262,16 @@ class Executor(object):
         from libs.predictor import Predictor
         from utils.data_loader import CreateDataLoader
 
+        """
+        # Load netCDF file names base on dates creating dates, netCDFs, lat_mins, lat_maxs, lon_mins, lon_maxs' lists.
+
+        # Create ID, cropped map, date, center_lat, center_lon' lists.
+
+        # Build DataLoader
+
+        # Predict and save(optional) for each element
+        """
+
         data_loader = CreateDataLoader.build_for_predict(self.config, x_dir)
 
         predictor = Predictor(model, device, self.config, self.save_dir)

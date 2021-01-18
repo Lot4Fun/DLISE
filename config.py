@@ -18,10 +18,10 @@ class Config(object):
         _objective = 'temperature' # 'temperature' or 'salinity'
         # Requirements : preprocess
         """
-        _preprocess_ssh_input_dir = '/PTAH/TO/SSH/DIRECTORY'
-        _preprocess_sst_input_dir = '/PTAH/TO/SST/DIRECTORY'
-        _preprocess_bio_input_dir = '/PTAH/TO/BIO/DIRECTORY'
-        _preprocess_argo_input_dir = '/PTAH/TO/ARGO/DIRECTORY'
+        _preprocess_ssh_input_dir = '/PATH/TO/SSH/DIRECTORY'
+        _preprocess_sst_input_dir = '/PATH/TO/SST/DIRECTORY'
+        _preprocess_bio_input_dir = '/PATH/TO/BIO/DIRECTORY'
+        _preprocess_argo_input_dir = '/PATH/TO/ARGO/DIRECTORY'
         """
         _preprocess_ssh_input_dir = '/archive/DLISE/download/20210117/ssh'
         _preprocess_sst_input_dir = '/archive/DLISE/download/20210117/sst'
@@ -32,8 +32,6 @@ class Config(object):
         #####_train_input_dir = '/PATH/TO/DATA/DIRECTORY'
         _train_input_dir = './data_storage/2021-0117-1817-3568'
         _train_save_dir = None
-        # Requirements : predict
-        _trained_weight_path = '/PATH/TO/PRETRAINED/WEIGHT/MODEL'
 
         self.model = {
             'backbone_pretrained': _backbone_pretrained,
@@ -72,8 +70,6 @@ class Config(object):
             'save_dir': _train_save_dir,
             'split_random_seed': 0,
             'resize_method': 'bicubic',
-            'loss_function': {
-            },
             'resume_weight_path': '',
             'num_workers': 0,
             'batch_size': 64,
@@ -81,22 +77,42 @@ class Config(object):
             'shuffle': True,
             'weight_save_period': 5,
             'optimizer': {
-                'lr': 5e-4,
-                'wait_decay_epoch': 100,
-                'momentum': 0.9,
-                'weight_decay': 5e-4,
-                'T_max': 10
+                'optim_type': 'adam',
+                'sgd': {
+                    'lr': 5e-4,
+                    'wait_decay_epoch': 100,
+                    'momentum': 0.9,
+                    'weight_decay': 5e-4,
+                    'T_max': 10
+                },
+                'adam': {
+                    'lr': 0.001,
+                    'betas': (0.9, 0.999),
+                    'eps': 1e-08,
+                    'weight_decay': 0,
+                    'amsgrad': False
+                }
             }
         }
 
         self.predict = {
-            'trained_weight_path': _trained_weight_path,
-            'visualize': True,
+            'input_dir': '/PATH/TO/DATA/HOME',
+            'prediction': {
+                '20210101': {
+                    'lat_min': 35,
+                    'lat_max': 40,
+                    'lon_min': 140,
+                    'lon_max': 180
+                },
+                '20210110': {
+                    'lat_min': 35,
+                    'lat_max': 40,
+                    'lon_min': 140,
+                    'lon_max': 180
+                },
+            'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',
             'save_results': True,
         }
-
-        assert not (self.train['optimizer']['wait_decay_epoch'] % self.train['weight_save_period']), 'wait_decay_epoch must be multiples of weight_save_period.'
-
 
     def build_config(self):
 
