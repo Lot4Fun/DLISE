@@ -89,6 +89,8 @@ class Preprocessor(object):
             cropped = map_nc.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
         elif data_type == 'sst':
             cropped = map_nc.variables['thetao'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+        elif data_type == 'bio':
+            cropped = map_nc.variables['chl'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
         else:
             logger.info('Map data type is not appropriate. Use default type (SSH)')
             cropped = map_nc.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]

@@ -51,7 +51,6 @@ class DLISE(nn.Module):
 
         if isinstance(layer, nn.Conv2d):
             self.xavier(layer.weight.data)
-            #layer.bias.data.zero_()
 
 
     def xavier(self, param):

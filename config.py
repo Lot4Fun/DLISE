@@ -13,24 +13,17 @@ class Config(object):
     def __init__(self):
 
         # Requirements : model
-        _backbone_pretrained = True
+        _backbone_pretrained = False
         _input_size = 224
         _objective = 'temperature' # 'temperature' or 'salinity'
         # Requirements : preprocess
-        """
         _preprocess_ssh_input_dir = '/PATH/TO/SSH/DIRECTORY'
         _preprocess_sst_input_dir = '/PATH/TO/SST/DIRECTORY'
         _preprocess_bio_input_dir = '/PATH/TO/BIO/DIRECTORY'
         _preprocess_argo_input_dir = '/PATH/TO/ARGO/DIRECTORY'
-        """
-        _preprocess_ssh_input_dir = '/archive/DLISE/download/20210117/ssh'
-        _preprocess_sst_input_dir = '/archive/DLISE/download/20210117/sst'
-        _preprocess_bio_input_dir = '/archive/DLISE/download/20210117/bio'
-        _preprocess_argo_input_dir = '/archive/DLISE/download/20210117/_argo'
         _preprocess_save_dir = None
         # Requirements : train
-        #####_train_input_dir = '/PATH/TO/DATA/DIRECTORY'
-        _train_input_dir = './data_storage/2021-0117-1817-3568'
+        _train_input_dir = '/PATH/TO/DATA/DIRECTORY'
         _train_save_dir = None
 
         self.model = {
@@ -56,10 +49,10 @@ class Config(object):
                 'meridional': 4 # -meridional/2 to +meridional\2 in degree
             },
             'argo': { # Extract argo profiles in the following region and term
-                'lat_min': 35,
-                'lat_max': 40,
-                'lon_min': 140,
-                'lon_max': 180,
+                'lat_min': 10, # Default: 35
+                'lat_max': 40, # Default: 40
+                'lon_min': 140, # Default: 140
+                'lon_max': 220, # Default: 180
                 'date_min': '2018-01-01',
                 'date_max': '2021-01-17'                
             }
@@ -72,8 +65,8 @@ class Config(object):
             'resize_method': 'bicubic',
             'resume_weight_path': '',
             'num_workers': 0,
-            'batch_size': 64,
-            'epoch': 100,
+            'batch_size': 512,
+            'epoch': 1000,
             'shuffle': True,
             'weight_save_period': 5,
             'optimizer': {
@@ -109,9 +102,10 @@ class Config(object):
                     'lat_max': 40,
                     'lon_min': 140,
                     'lon_max': 180
-                },
+                }
+            },
             'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',
-            'save_results': True,
+            'save_results': True
         }
 
     def build_config(self):

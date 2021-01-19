@@ -20,9 +20,9 @@ class Trainer(object):
         self.config = config
         self.save_dir = save_dir
 
-    def run(self, train_loader, validate_loader):
+    def run(self, train_loader, valid_loader):
 
-        loss_fn =nn.MSELoss()
+        loss_fn =nn.L1Loss()
 
         optimizer = Optimizers.get_optimizer(self.config.train.optimizer, self.model.parameters())
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10)
@@ -31,7 +31,7 @@ class Trainer(object):
         for epoch in range(1, self.config.train.epoch+1):
 
             train_loss = self._train(loss_fn, optimizer, train_loader)
-            valid_loss = self._validate(loss_fn, validate_loader)
+            valid_loss = self._validate(loss_fn, valid_loader)
 
             scheduler.step(valid_loss)
 

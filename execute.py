@@ -124,8 +124,7 @@ class Executor(object):
                 )
                 ssh_file = preprocessor.check_file_existance('ssh', argo_date, ssh_files)
                 sst_file = preprocessor.check_file_existance('sst', argo_date, sst_files)
-                #####bio_file = preprocessor.check_file_existance('bio', argo_date, bio_files)
-                bio_file = True
+                bio_file = preprocessor.check_file_existance('bio', argo_date, bio_files)
 
                 # Skip a profile if some related data do not exist
                 if not (is_in_region and within_the_period and ssh_file and sst_file and bio_file):
@@ -162,6 +161,7 @@ class Executor(object):
                 # Crop SSH/SST
                 cropped_ssh = preprocessor.crop_map(argo_lat, argo_lon, ssh_file, 'ssh')
                 cropped_sst = preprocessor.crop_map(argo_lat, argo_lon, sst_file, 'sst')
+                cropped_bio = preprocessor.crop_map(argo_lat, argo_lon, bio_file, 'bio')
 
                 # Make argo location grid location
                 round_argo_lat = preprocessor.round_location_in_grid(argo_lat)
@@ -191,6 +191,7 @@ class Executor(object):
                 # Store SSH/SST
                 cropped_ssh.dump(self.save_dir.joinpath('ssh', str(argo_id).zfill(7)+'.npy'))
                 cropped_sst.dump(self.save_dir.joinpath('sst', str(argo_id).zfill(7)+'.npy'))
+                cropped_bio.dump(self.save_dir.joinpath('bio', str(argo_id).zfill(7)+'.npy'))
 
                 # Skip separater (line of '**')
                 lines.pop()

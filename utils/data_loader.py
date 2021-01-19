@@ -34,7 +34,7 @@ class CreateDataLoader(object):
         sal_list = []
         ssh_list = []
         sst_list = []
-        #bio_list = []
+        bio_list = []
 
         with open(data_home + '/db.csv', 'r') as f:
             lines = f.readlines()
@@ -52,7 +52,7 @@ class CreateDataLoader(object):
             sal_list.append(data_home + f'/salinity/{data_id}.npy')
             ssh_list.append(data_home + f'/ssh/{data_id}.npy')
             sst_list.append(data_home + f'/sst/{data_id}.npy')
-            #bio_list.append(data_home + f'/bio/{data_id}.npy')
+            bio_list.append(data_home + f'/bio/{data_id}.npy')
 
         train_date_list, valid_date_list, \
         train_lat_list, valid_lat_list, \
@@ -60,8 +60,11 @@ class CreateDataLoader(object):
         train_tem_list, valid_tem_list, \
         train_sal_list, valid_sal_list, \
         train_ssh_list, valid_ssh_list, \
-        train_sst_list, valid_sst_list = train_test_split(date_list, lat_list, lon_list, tem_list, sal_list, ssh_list, sst_list,
-                                                            random_state=config.train.split_random_seed)
+        train_sst_list, valid_sst_list, \
+        train_bio_list, valid_bio_list = train_test_split(date_list, lat_list, lon_list,
+                                                          tem_list, sal_list,
+                                                          ssh_list, sst_list, bio_list,
+                                                          random_state=config.train.split_random_seed)
 
         # Dataset
         train_dataset = BatchDataset(dates=train_date_list,
@@ -71,6 +74,7 @@ class CreateDataLoader(object):
                                      sals=train_sal_list,
                                      sshs=train_ssh_list,
                                      ssts=train_sst_list,
+                                     bios=train_bio_list,
                                      config=config)
 
         valid_dataset = BatchDataset(dates=valid_date_list,
@@ -80,17 +84,16 @@ class CreateDataLoader(object):
                                      sals=valid_sal_list,
                                      sshs=valid_ssh_list,
                                      ssts=valid_sst_list,
+                                     bios=valid_bio_list,
                                      config=config)
 
         # Data loader
         train_loader = data.DataLoader(train_dataset,
                                        batch_size=config.train.batch_size,
                                        shuffle=config.train.shuffle)
-                                       #collate_fn=detection_collate)
         valid_loader = data.DataLoader(valid_dataset,
                                        batch_size=config.train.batch_size,
                                        shuffle=False)
-                                       #collate_fn=detection_collate)
 
         return train_loader, valid_loader
 
@@ -103,7 +106,7 @@ class CreateDataLoader(object):
         sal_list = []
         ssh_list = []
         sst_list = []
-        #bio_list = []        
+        bio_list = []        
 
 
 
@@ -128,7 +131,7 @@ class CreateDataLoader(object):
 
 class BatchDataset(torch.utils.data.Dataset):
 
-    def __init__(self, dates, lats, lons, tems, sals, sshs, ssts, config):
+    def __init__(self, dates, lats, lons, tems, sals, sshs, ssts, bios, config):
 
         self.dats = dates
         self.lats = lats
@@ -137,6 +140,7 @@ class BatchDataset(torch.utils.data.Dataset):
         self.sals = sals
         self.sshs = sshs
         self.ssts = ssts
+        self.bios = bios
         self.resize = config.model.input_size
         self.resize_method = config.train.resize_method
         self.objective = config.model.objective
@@ -154,10 +158,10 @@ class BatchDataset(torch.utils.data.Dataset):
         sal = torch.from_numpy(np.load(self.sals[idx]).astype(np.float32)).clone()
         ssh = torch.from_numpy(np.load(self.sshs[idx], allow_pickle=True).data.astype(np.float32)).clone()
         sst = torch.from_numpy(np.load(self.ssts[idx], allow_pickle=True).data.astype(np.float32)).clone()
+        bio = torch.from_numpy(np.load(self.bios[idx], allow_pickle=True).data.astype(np.float32)).clone()
 
         # Concatenate input and output
-        ##### Need to add BIO
-        in_map = torch.stack((ssh, sst, sst), dim=0).unsqueeze(0)
+        in_map = torch.stack((ssh, sst, bio), dim=0).unsqueeze(0)
 
         # Resize ssh and sst
         in_map = F.interpolate(in_map, size=(self.resize, self.resize), mode=self.resize_method, align_corners=False).squeeze(0)
