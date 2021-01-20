@@ -121,20 +121,95 @@ After running the above command, you can see directory structure in the specifie
 
 ### Preprocess
 
-ADD LATER
+1. Modify `Requirements` in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
+
+    ```python
+    # Requirements : preprocess
+    _preprocess_ssh_input_dir = '/PATH/TO/SSH/DIRECTORY'
+    _preprocess_sst_input_dir = '/PATH/TO/SST/DIRECTORY'
+    _preprocess_bio_input_dir = '/PATH/TO/BIO/DIRECTORY'
+    _preprocess_argo_input_dir = '/PATH/TO/ARGO/DIRECTORY'
+    _preprocess_save_dir = None
+    ```
+
+2. Run script in preprocess mode.
+
+    ```bash
+    python execute.py preprocess
+    ```
+
+    After running the above command, you can see directory structure in the specified save directory like below.
+
+    ```text
+    {SAVE_HOME}
+        ├── bio
+        │   ├── 0000001.npy
+        │   └── ...
+        ├── config.json
+        ├── db.csv
+        ├── pressure
+        │   ├── 0000001.npy
+        │   └── ...
+        ├── salinity
+        │   ├── 0000001.npy
+        │   └── ...
+        ├── ssh
+        │   ├── 0000001.npy
+        │   └── ...
+        ├── sst
+        │   ├── 0000001.npy
+        │   └── ...
+        └── temperature
+            ├── 0000001.npy
+            └── ...
+    ```
 
 ### Train
 
 1. Modify `Requirements` in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
 
     ```python
-    ADD LATER
+    # Requirements : model
+    _backbone_pretrained = False
+    _input_size = 224
+    _objective = 'temperature' # 'temperature' or 'salinity'
+    # Requirements : train
+    _train_input_dir = '/PATH/TO/DATA/DIRECTORY'
+    _train_save_dir = None
     ```
 
 2. Set hyperparameters for train in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py).
 
     ```python
-    ADD LATER
+    self.train = {
+        'input_dir': _train_input_dir,
+        'save_dir': _train_save_dir,
+        'split_random_seed': 0,
+        'resize_method': 'bicubic',
+        'resume_weight_path': '',
+        'num_workers': 0,
+        'batch_size': 512,
+        'epoch': 1000,
+        'shuffle': True,
+        'weight_save_period': 5,
+        'optimizer': {
+            'optim_type': 'adam',
+            'sgd': {
+                'lr': 5e-4,
+                'wait_decay_epoch': 100,
+                'momentum': 0.9,
+                'weight_decay': 5e-4,
+                'T_max': 10
+            },
+            'adam': {
+                'lr': 0.001,
+                'betas': (0.9, 0.999),
+                'eps': 1e-08,
+                'weight_decay': 0,
+                'amsgrad': False
+            }
+        }
+    }
     ```
 
 3. Run script in train mode.
@@ -154,14 +229,39 @@ ADD LATER
 
 1. Set path to trained weights at the `trained_weight_path` in the `config.json` created in train phase.
 
-    ```python
-    ADD LATER
+    ```json
+    "predict": {
+        ...,
+        "trained_weight_path": "/PATH/TO/PRETRAINED/WEIGHT",
+        ...,
+    }
     ```
 
 2. Change other configurations in `predict`.
 
-    ```python
-    ADD LATER
+    ```json
+    "predict": {
+        "crop": {
+            "zonal": 4,
+            "meridional": 4
+        },
+        "objectives": {
+            "20201001": {
+                "lat_min": 10,
+                "lat_max": 40,
+                "lon_min": 140,
+                "lon_max": 220
+            },
+            "20201015": {
+                "lat_min": 10,
+                "lat_max": 40,
+                "lon_min": 140,
+                "lon_max": 220
+            }
+        },
+        "trained_weight_path": "/PATH/TO/PRETRAINED/WEIGHT",
+        "save_results": true
+    }
     ```
 
 3. Run script in detection mode.
