@@ -2,10 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import json
-from pathlib import Path
 from logging import getLogger
-import cv2
+from pathlib import Path
+
+import netCDF4
+import numpy as np
+import pandas as pd
 import torch
+
+from .preprocessor import Preprocessor
 
 logger = getLogger('DLISE')
 
@@ -13,6 +18,8 @@ class Predictor(object):
 
     def __init__(self, model, device, config, save_dir):
         
+        self.preprocessor = Preprocessor(config)
+
         self.model = model
         self.device = device
         self.config = config
@@ -23,86 +30,126 @@ class Predictor(object):
 
     def run(self, data_loader):
 
-        logger.info('Begin detection.')
+        logger.info('Begin prediction.')
+
+        ##### OPNE DB.CSV
+        with open(self.save_dir.parent.joinpath('db.csv'), 'w') as f:
+            f.write('data_id,date,latitude,longitude\n')
+
         self.model.eval()
         with torch.no_grad():
 
-            detected_list = [] if self.config.detect.save_results else None
+            n_predicted = 0
+            for date, lat, lon, in_map, _ in data_loader:
 
-            n_detected = 0
-            for img_path, img_h, img_w, img in data_loader:
+                in_map = in_map.to(self.device)
+                predicted = self.model(lat, lon, in_map).to('cpu').squeeze().detach().numpy().copy()
 
-                # Convert tuple of length 1 to string
-                img_path = img_path[0]
+                n_predicted += 1
 
-                if self.device.type == 'cuda':
-                    img = img.to(self.device)
-
-                detected = self.model(img).to('cpu')
-                scale_factors = torch.Tensor([img_w, img_h, img_w, img_h])
-
-                if self.config.detect.save_results:
-                    detected_list.append(detected.tolist())
-
-                if self.config.detect.visualize:
-                    self._visualize(img_path, detected, scale_factors)
+                if self.config.predict.save_results:
+                    with open(self.save_dir.parent.joinpath('db.csv'), 'a') as f:
+                        f.write(str(n_predicted).zfill(7) + ',' + str(date[0]) + ',' + str(lat.item()) + ',' + str(lon.item()) + '\n')
+                    np.save(self.save_dir.joinpath(str(n_predicted).zfill(7)+'.npy'), predicted)
                 
-                n_detected += 1
-                if not (n_detected % 100):
-                    logger.info(f'Progress: [{n_detected:08}/{len(data_loader.dataset):08}]')
+                if not (n_predicted % 100):
+                    logger.info(f'Progress: [{n_predicted:08}/{len(data_loader.dataset):08}]')
 
-        if self.config.detect.save_results:
-            with open(str(self.save_dir.parent.joinpath('detected.json')), 'w') as f:
-                json.dump(detected_list, f, ensure_ascii=False, indent=4)
-
-        logger.info('Detection has finished.')
+        logger.info('Prediction has finished.')
 
 
-    def load_data(self):
-        logger.info('Loading data...')
+    def load_netcdf(self, x_dir):
 
-        ssh_cropped = []
-        sst_cropped = []
-        input_info  = []
+        logger.info('Loading netCDF files...')
 
-        ssh_files = self.x_dir.joinpath('ssh').glob('*.nc')
-        sst_files = self.x_dir.joinpath('sst').glob('*.nc')
-        
-        # Create input data
-        for ssh_file, sst_file in zip(ssh_files, sst_files):
+        objectives = self.config.predict.objectives
 
-            # Check date match between two files
-            if not (ssh_file.stem[-8:] == sst_file.stem[-8:]):
+        dates = []
+        pred_db = []
+        ssh_paths = []
+        sst_paths = []
+        bio_paths = []
+
+        ssh_files = list(x_dir.joinpath('ssh').glob('*.nc'))
+        sst_files = list(x_dir.joinpath('sst').glob('*.nc'))
+        bio_files = list(x_dir.joinpath('bio').glob('*.nc'))
+
+        for obj_date in objectives.keys():
+
+            # Get the relevant file path
+            ssh_file = self.preprocessor.check_file_existance('ssh', obj_date, ssh_files)
+            sst_file = self.preprocessor.check_file_existance('sst', obj_date, sst_files)
+            bio_file = self.preprocessor.check_file_existance('bio', obj_date, bio_files)
+
+            if not (ssh_file and sst_file and bio_file):
                 continue
 
-            ssh_crop_list, _, _= self.get_array_data(
-                ssh_file,
-                self.hparams['region']['latitude']['min'],
-                self.hparams['region']['latitude']['max'],
-                self.hparams['region']['longitude']['min'],
-                self.hparams['region']['longitude']['max'],
-                self.hparams['crop_size']['meridional_distance_in_degree'],
-                self.hparams['crop_size']['zonal_distance_in_degree'],
-                data_type='ssh', grid_unit_in_degree=0.25)
+            dates.append(obj_date)
+            pred_db.append(objectives[obj_date])
+            ssh_paths.append(ssh_file)
+            sst_paths.append(sst_file)
+            bio_paths.append(bio_file)
 
-            sst_crop_list, info, dates = self.get_array_data(
-                sst_file,
-                self.hparams['region']['latitude']['min'],
-                self.hparams['region']['latitude']['max'],
-                self.hparams['region']['longitude']['min'],
-                self.hparams['region']['longitude']['max'],
-                self.hparams['crop_size']['meridional_distance_in_degree'],
-                self.hparams['crop_size']['zonal_distance_in_degree'],
-                data_type='sst', grid_unit_in_degree=0.25)
+        return dates, pred_db, ssh_paths, sst_paths, bio_paths 
 
-            ssh_cropped.extend(ssh_crop_list)
-            sst_cropped.extend(sst_crop_list)
-            input_info.extend(info)
+    def crop(self, dates, pred_db, ssh_paths, sst_paths, bio_paths):
 
-            # Pack SSH and SST
-            logger.info('Packing SSH and SST...')
-            input_maps = []
-            for idx in range(len(ssh_cropped)):
-                input_maps.append([ssh_cropped[idx], sst_cropped[idx]])
+        logger.info('Begin to crop map files.')
 
-        return np.array(input_info), np.array(input_maps), np.array(dates)
+        crop_dates = []
+        crop_lats = []
+        crop_lons = []
+        crop_sshs = []
+        crop_ssts = []
+        crop_bios = []
+
+        for date, db, ssh_path, sst_path, bio_path in zip(dates, pred_db, ssh_paths, sst_paths, bio_paths):
+
+            logger.info(f'Cropping maps on {date} ...')
+
+            center_lat = (db['lat_max'] + db['lat_min']) / 2.
+            center_lon = (db['lon_max'] + db['lon_min']) / 2.
+            meridional_dist = db['lat_max'] - db['lat_min']
+            zonal_dist = db['lon_max'] - db['lon_min']
+
+            # Load netCDF data
+            ssh = netCDF4.Dataset(ssh_path, 'r')
+            sst = netCDF4.Dataset(sst_path, 'r')
+            bio = netCDF4.Dataset(bio_path, 'r')
+
+            # Get min-max latitude and longitude for the center of each crooped map
+            lat_min_idx, lat_max_idx = self.preprocessor.get_minmax_index_from_degree(center_lat, meridional_dist, 'latitude')
+            lon_min_idx, lon_max_idx = self.preprocessor.get_minmax_index_from_degree(center_lon, zonal_dist, 'longitude')
+
+            # Crop SSH/SST
+            for center_lat in np.arange(db['lat_min'], db['lat_max']+0.25, 0.25):
+
+                for center_lon in np.arange(db['lon_min'], db['lon_max']+0.25, 0.25):
+
+                    # Get min-max latitude and longitude for boundaries of each crooped map
+                    lat_min_idx, lat_max_idx = self.preprocessor.get_minmax_index_from_degree(center_lat,
+                                                                                              self.config.predict.crop.meridional,
+                                                                                              'latitude')
+                    lon_min_idx, lon_max_idx = self.preprocessor.get_minmax_index_from_degree(center_lon,
+                                                                                              self.config.predict.crop.zonal,
+                                                                                              'longitude')
+
+                    # Crop
+                    crop_ssh = ssh.variables['zos'][0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+                    crop_sst = sst.variables['thetao'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+                    crop_bio = bio.variables['chl'][0, 0, lat_min_idx:lat_max_idx+1, lon_min_idx:lon_max_idx+1]
+
+                    # Fill missilng values
+                    crop_ssh[crop_ssh.mask] = 0.0
+                    crop_sst[crop_sst.mask] = 0.0
+                    crop_bio[crop_bio.mask] = 0.0
+
+                    # Store data
+                    crop_dates.append(date)
+                    crop_lats.append(center_lat)
+                    crop_lons.append(center_lon)
+                    crop_sshs.append(crop_ssh)
+                    crop_ssts.append(crop_sst)
+                    crop_bios.append(crop_bio)
+
+        return crop_dates, crop_lats, crop_lons, crop_sshs, crop_ssts, crop_bios

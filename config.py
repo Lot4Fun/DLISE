@@ -21,7 +21,6 @@ class Config(object):
         _preprocess_sst_input_dir = '/PATH/TO/SST/DIRECTORY'
         _preprocess_bio_input_dir = '/PATH/TO/BIO/DIRECTORY'
         _preprocess_argo_input_dir = '/PATH/TO/ARGO/DIRECTORY'
-        _preprocess_save_dir = None
         # Requirements : train
         _train_input_dir = '/PATH/TO/DATA/DIRECTORY'
         _train_save_dir = None
@@ -89,19 +88,29 @@ class Config(object):
         }
 
         self.predict = {
-            'input_dir': '/PATH/TO/DATA/HOME',
-            'prediction': {
-                '20210101': {
-                    'lat_min': 35,
+            'crop': { # Must be the same of preprocess
+                'zonal': 4,
+                'meridional': 4
+            },
+            'objectives': {
+                # Add information to predict as follows.
+                #    'YYYYMMDD': {
+                #        'lat_min': southern_limit,
+                #        'lat_max': northern_limit,
+                #        'lon_min': western_limit,
+                #        'lon_max': eastern_limit
+                #    }
+                '20201001': {
+                    'lat_min': 10,
                     'lat_max': 40,
                     'lon_min': 140,
-                    'lon_max': 180
+                    'lon_max': 220
                 },
-                '20210110': {
-                    'lat_min': 35,
+                '20201015': {
+                    'lat_min': 10,
                     'lat_max': 40,
                     'lon_min': 140,
-                    'lon_max': 180
+                    'lon_max': 220
                 }
             },
             'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',

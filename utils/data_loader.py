@@ -23,7 +23,7 @@ def detection_collate(batch):
 class CreateDataLoader(object):
 
     @classmethod
-    def build_for_train(self, config):
+    def build_for_train(self, exec_type, config):
 
         data_home = config.train.input_dir
 
@@ -67,25 +67,27 @@ class CreateDataLoader(object):
                                                           random_state=config.train.split_random_seed)
 
         # Dataset
-        train_dataset = BatchDataset(dates=train_date_list,
+        train_dataset = BatchDataset(exec_type=exec_type,
+                                     config=config,
+                                     dates=train_date_list,
                                      lats=train_lat_list,
                                      lons=train_lon_list,
-                                     tems=train_tem_list,
-                                     sals=train_sal_list,
                                      sshs=train_ssh_list,
                                      ssts=train_sst_list,
                                      bios=train_bio_list,
-                                     config=config)
+                                     tems=train_tem_list,
+                                     sals=train_sal_list)
 
-        valid_dataset = BatchDataset(dates=valid_date_list,
+        valid_dataset = BatchDataset(exec_type=exec_type,
+                                     config=config,
+                                     dates=valid_date_list,
                                      lats=valid_lat_list,
                                      lons=valid_lon_list,
-                                     tems=valid_tem_list,
-                                     sals=valid_sal_list,
                                      sshs=valid_ssh_list,
                                      ssts=valid_sst_list,
                                      bios=valid_bio_list,
-                                     config=config)
+                                     tems=valid_tem_list,
+                                     sals=valid_sal_list)
 
         # Data loader
         train_loader = data.DataLoader(train_dataset,
@@ -99,66 +101,66 @@ class CreateDataLoader(object):
 
 
     @classmethod
-    def build_for_predict(self, config, x_dir):
+    def build_for_predict(self, exec_type, config, dates, lats, lons, sshs, ssts, bios):
 
-        date_list = []
-        tem_list = []
-        sal_list = []
-        ssh_list = []
-        sst_list = []
-        bio_list = []        
+        dataset = BatchDataset(exec_type=exec_type,
+                               config=config,
+                               dates=dates,
+                               lats=lats,
+                               lons=lons,
+                               sshs=sshs,
+                               ssts=ssts,
+                               bios=bios)
 
-
-
-        """
-        inputs = [img_path for img_path in Path(x_dir).glob('*') if re.fullmatch('.jpg|.jpeg|.png', img_path.suffix.lower())]
-
-        dataset = BatchDataset(
-            inputs=inputs,
-            config=config,
-        )
-
-        data_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
-            batch_size=1,
-            shuffle=False,
-            num_workers=0,
-        )
-
+        data_loader = data.DataLoader(dataset,
+                                      batch_size=1,
+                                      shuffle=False)
+        
         return data_loader
-        """
-        pass
+
 
 class BatchDataset(torch.utils.data.Dataset):
 
-    def __init__(self, dates, lats, lons, tems, sals, sshs, ssts, bios, config):
+    def __init__(self, exec_type, config, dates, lats, lons, sshs, ssts, bios, tems=None, sals=None):
 
-        self.dats = dates
-        self.lats = lats
-        self.lons = lons
-        self.tems = tems
-        self.sals = sals
-        self.sshs = sshs
-        self.ssts = ssts
-        self.bios = bios
+        self.exec_type = exec_type
         self.resize = config.model.input_size
         self.resize_method = config.train.resize_method
         self.objective = config.model.objective
 
+        self.dats = dates
+        self.lats = lats
+        self.lons = lons
+        self.sshs = sshs
+        self.ssts = ssts
+        self.bios = bios
+        self.tems = tems
+        self.sals = sals
+
     def __len__(self):
 
-        return len(self.tems)
+        return len(self.dats)
 
     def __getitem__(self, idx):
 
-        #dat = self.dats[idx]
-        lat = torch.from_numpy(np.array([float(self.lats[idx])]).astype(np.float32)).clone()
-        lon = torch.from_numpy(np.array([float(self.lons[idx])]).astype(np.float32)).clone()
-        tem = torch.from_numpy(np.load(self.tems[idx]).astype(np.float32)).clone()
-        sal = torch.from_numpy(np.load(self.sals[idx]).astype(np.float32)).clone()
-        ssh = torch.from_numpy(np.load(self.sshs[idx], allow_pickle=True).data.astype(np.float32)).clone()
-        sst = torch.from_numpy(np.load(self.ssts[idx], allow_pickle=True).data.astype(np.float32)).clone()
-        bio = torch.from_numpy(np.load(self.bios[idx], allow_pickle=True).data.astype(np.float32)).clone()
+        if self.exec_type == 'train':
+            dat = self.dats[idx]
+            lat = torch.from_numpy(np.array([float(self.lats[idx])]).astype(np.float32)).clone()
+            lon = torch.from_numpy(np.array([float(self.lons[idx])]).astype(np.float32)).clone()
+            ssh = torch.from_numpy(np.load(self.sshs[idx], allow_pickle=True).data.astype(np.float32)).clone()
+            sst = torch.from_numpy(np.load(self.ssts[idx], allow_pickle=True).data.astype(np.float32)).clone()
+            bio = torch.from_numpy(np.load(self.bios[idx], allow_pickle=True).data.astype(np.float32)).clone()
+            tem = torch.from_numpy(np.load(self.tems[idx]).astype(np.float32)).clone()
+            sal = torch.from_numpy(np.load(self.sals[idx]).astype(np.float32)).clone()
+        else:
+            dat = self.dats[idx]
+            lat = torch.from_numpy(np.array([float(self.lats[idx])]).astype(np.float32)).clone()
+            lon = torch.from_numpy(np.array([float(self.lons[idx])]).astype(np.float32)).clone()
+            ssh = torch.from_numpy(self.sshs[idx].data.astype(np.float32)).clone()
+            sst = torch.from_numpy(self.ssts[idx].data.astype(np.float32)).clone()
+            bio = torch.from_numpy(self.bios[idx].data.astype(np.float32)).clone()
+            tem = torch.Tensor()
+            sal = torch.Tensor()
 
         # Concatenate input and output
         in_map = torch.stack((ssh, sst, bio), dim=0).unsqueeze(0)
@@ -167,9 +169,9 @@ class BatchDataset(torch.utils.data.Dataset):
         in_map = F.interpolate(in_map, size=(self.resize, self.resize), mode=self.resize_method, align_corners=False).squeeze(0)
 
         if self.objective == 'salinity':
-            return lat, lon, in_map, sal
+            return dat, lat, lon, in_map, sal
         else:
-            return lat, lon, in_map, tem
+            return dat, lat, lon, in_map, tem
         
 
 if __name__ == '__main__':

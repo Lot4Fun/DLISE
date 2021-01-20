@@ -53,10 +53,10 @@ class Trainer(object):
         for mini_batch in train_loader:
 
             # Send data to GPU dvice
-            input_lats = mini_batch[0].to(self.device)
-            input_lons = mini_batch[1].to(self.device)
-            input_maps = mini_batch[2].to(self.device)
-            targets = mini_batch[3].to(self.device)
+            input_lats = mini_batch[1].to(self.device)
+            input_lons = mini_batch[2].to(self.device)
+            input_maps = mini_batch[3].to(self.device)
+            targets = mini_batch[4].to(self.device)
 
             # Forward
             optimizer.zero_grad()
@@ -88,10 +88,10 @@ class Trainer(object):
             for mini_batch in valid_loader:
 
                 # Send data to GPU dvice
-                input_lats = mini_batch[0].to(self.device)
-                input_lons = mini_batch[1].to(self.device)
-                input_maps = mini_batch[2].to(self.device)
-                targets = mini_batch[3].to(self.device)
+                input_lats = mini_batch[1].to(self.device)
+                input_lons = mini_batch[2].to(self.device)
+                input_maps = mini_batch[3].to(self.device)
+                targets = mini_batch[4].to(self.device)
 
                 # Forward
                 outputs = self.model(input_lats, input_lons, input_maps)

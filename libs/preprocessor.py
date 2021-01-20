@@ -49,16 +49,16 @@ class Preprocessor(object):
         else:
             return False
 
-    def check_file_existance(self, data_type, argo_date, files):
+    def check_file_existance(self, data_type, obj_date, files):
 
         if data_type == 'bio':
             for file in files:
-                if argo_date in file.name:
+                if obj_date in file.name:
                     return file
             return False
         else:
             for file in files:
-                if 'dm' + argo_date in file.name:
+                if 'dm' + obj_date in file.name:
                     return file
             return False
 
@@ -115,7 +115,7 @@ class Preprocessor(object):
 
     def get_minmax_index_from_degree(self, argo_in_degree, distance_in_degree, data_type): 
         """
-        Get min-max index of a small map based on the centerl latitude and latitude
+        Get min-max index of a small map based on the center latitude and latitude
         """
         # Latitude  : index=0 -> -83.0 degree, index=691 -> 89.75 degree
         # Longitude : index=0 -> XX degree, index=1439 -> XX degree

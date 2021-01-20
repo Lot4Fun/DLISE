@@ -78,7 +78,7 @@ class Executor(object):
                 self.save_dir = Path(DLISE_HOME).joinpath('results', 'predict', issue_id)
 
         logger.info(f'Save directory: {self.save_dir}')
-        CommonUtils.prepare(self.config, self.save_dir)
+        CommonUtils.prepare(self.exec_type, self.config, self.save_dir)
 
 
     def preprocess(self, n_process=None):
@@ -252,7 +252,7 @@ class Executor(object):
         from utils.data_loader import CreateDataLoader
         from utils.common import CommonUtils
 
-        train_loader, validate_loader = CreateDataLoader.build_for_train(self.config)
+        train_loader, validate_loader = CreateDataLoader.build_for_train(self.exec_type, self.config)
 
         trainer = Trainer(model, device, self.config, self.save_dir)
         trainer.run(train_loader, validate_loader)
@@ -263,24 +263,20 @@ class Executor(object):
         from libs.predictor import Predictor
         from utils.data_loader import CreateDataLoader
 
-        """
-        # Load netCDF file names base on dates creating dates, netCDFs, lat_mins, lat_maxs, lon_mins, lon_maxs' lists.
+        x_dir = Path(x_dir)
+        predictor = Predictor(trained_model, device, self.config, self.save_dir)
 
-        # Create ID, cropped map, date, center_lat, center_lon' lists.
+        # Load netCDF files
+        dates, pred_db, ssh_paths, sst_paths, bio_paths = predictor.load_netcdf(x_dir)
+
+        # Crop
+        dates, lats, lons, sshs, ssts, bios = predictor.crop(dates, pred_db, ssh_paths, sst_paths, bio_paths)
 
         # Build DataLoader
+        data_loader = CreateDataLoader.build_for_predict(self.exec_type, self.config, dates, lats, lons, sshs, ssts, bios)
 
         # Predict and save(optional) for each element
-        """
-
-        data_loader = CreateDataLoader.build_for_predict(self.config, x_dir)
-
-        predictor = Predictor(model, device, self.config, self.save_dir)
-        predictor.run(data_loader)
-    
-
-    def webcam(self):
-        pass
+        predictor.run(data_loader)    
         
 
 if __name__ == '__main__':
