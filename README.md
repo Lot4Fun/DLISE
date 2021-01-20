@@ -266,6 +266,8 @@ After running the above command, you can see directory structure in the specifie
 
 3. Run script in detection mode.
 
+    __Note:__ `/INPUT/DIR` is the directory `{SAVE_HOME}` created in the section [Download dataset](#download-dataset)
+
     ```bash
     python execute.py predict -c /PATH/TO/config.json -x /INPUT/DIR [-y /OUTPUT/DIR]
     ```
