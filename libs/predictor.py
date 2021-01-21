@@ -32,25 +32,40 @@ class Predictor(object):
 
         logger.info('Begin prediction.')
 
-        ##### OPNE DB.CSV
         with open(self.save_dir.parent.joinpath('db.csv'), 'w') as f:
-            f.write('data_id,date,latitude,longitude\n')
+            f.write('seq_id,data_id,date,latitude,longitude\n')
 
         self.model.eval()
         with torch.no_grad():
 
             n_predicted = 0
+            each_date_id = {}
+
             for date, lat, lon, in_map, _ in data_loader:
+
+                date = date[0] # Original date is tuple
 
                 in_map = in_map.to(self.device)
                 predicted = self.model(lat, lon, in_map).to('cpu').squeeze().detach().numpy().copy()
 
                 n_predicted += 1
+                if str(date) in each_date_id.keys():
+                    each_date_id[str(date)] += 1
+                else:
+                    each_date_id[str(date)] = 1
 
                 if self.config.predict.save_results:
+
                     with open(self.save_dir.parent.joinpath('db.csv'), 'a') as f:
-                        f.write(str(n_predicted).zfill(7) + ',' + str(date[0]) + ',' + str(lat.item()) + ',' + str(lon.item()) + '\n')
-                    np.save(self.save_dir.joinpath(str(n_predicted).zfill(7)+'.npy'), predicted)
+                        f.write(str(n_predicted).zfill(7) + ',' +
+                                str(each_date_id[date]).zfill(7) + ',' + 
+                                str(date[0]) + ',' + 
+                                str(lat.item()) + ',' + 
+                                str(lon.item()) + '\n')
+
+                    if not self.save_dir.joinpath(date, 'profiles').exists():
+                        self.save_dir.joinpath(date, 'profiles').mkdir(exist_ok=True, parents=True)
+                    np.save(self.save_dir.joinpath(date, 'profiles', str(each_date_id[date]).zfill(7)+'.npy'), predicted)
                 
                 if not (n_predicted % 100):
                     logger.info(f'Progress: [{n_predicted:08}/{len(data_loader.dataset):08}]')

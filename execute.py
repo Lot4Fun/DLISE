@@ -14,6 +14,7 @@ from logging import DEBUG, INFO
 from logging import getLogger, StreamHandler, FileHandler, Formatter
 from pathlib import Path
 import re
+import shutil
 
 # Third party library
 from attrdict import AttrDict
@@ -51,7 +52,7 @@ class Executor(object):
 
     def __init__(self, exec_type, config=None, y_dir=None):
 
-        assert exec_type in ['preprocess', 'train', 'predict'], 'exec_type is not correct.'
+        assert exec_type in ['preprocess', 'train', 'predict', 'visualize'], 'exec_type is not correct.'
 
         self.exec_type = exec_type
         if config:
@@ -75,7 +76,7 @@ class Executor(object):
             if y_dir:
                 self.save_dir = Path(y_dir)
             else:
-                self.save_dir = Path(DLISE_HOME).joinpath('results', 'predict', issue_id)
+                self.save_dir = Path(DLISE_HOME).joinpath('results', exec_type, issue_id)
 
         logger.info(f'Save directory: {self.save_dir}')
         CommonUtils.prepare(self.exec_type, self.config, self.save_dir)
@@ -269,6 +270,21 @@ class Executor(object):
         # Load netCDF files
         dates, pred_db, ssh_paths, sst_paths, bio_paths = predictor.load_netcdf(x_dir)
 
+        # Copy netCDFs to save directory
+        for date, ssh_path, sst_path, bio_path in zip(dates, ssh_paths, sst_paths, bio_paths):
+            
+            tmp_save_dir = self.save_dir.joinpath('predicted', date)
+            tmp_save_dir.mkdir(exist_ok=True, parents=True)
+
+            shutil.copy2(ssh_path, tmp_save_dir.joinpath('ssh.nc'))
+            shutil.copy2(sst_path, tmp_save_dir.joinpath('sst.nc'))
+            shutil.copy2(bio_path, tmp_save_dir.joinpath('bio.nc'))
+
+            with open(tmp_save_dir.joinpath('input_files.txt'), 'w') as f:
+                f.write('SSH: ' + str(ssh_path) + '\n')
+                f.write('SST: ' + str(sst_path) + '\n')
+                f.write('BIO: ' + str(bio_path) + '\n')
+
         # Crop
         dates, lats, lons, sshs, ssts, bios = predictor.crop(dates, pred_db, ssh_paths, sst_paths, bio_paths)
 
@@ -277,7 +293,13 @@ class Executor(object):
 
         # Predict and save(optional) for each element
         predictor.run(data_loader)    
-        
+
+
+    def visualize(self, x_dir, y_dir):
+
+        from libs.predictor import Predictor
+        from utils.data_loader import CreateDataLoader
+
 
 if __name__ == '__main__':
 
@@ -344,5 +366,5 @@ if __name__ == '__main__':
         elif args.exec_type == 'predict':
             executor.predict(model, device, args.x_dir, args.y_dir)
         
-        elif args.exec_type == 'webcam':
+        elif args.exec_type == 'visualize':
             pass
