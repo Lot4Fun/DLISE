@@ -34,7 +34,16 @@ In addition to following system requeirements, you need to create [Copernicus Ma
 - lhasa (`lha` command is necessary to decompress lzh files)
 
     ```bash
-    sudo apt-get install lhasa
+    sudo apt install lhasa
+    ```
+
+- libgeos, libgeos-dev, python3.X-dev (These are necessary for `basemap`)
+
+    ```bash
+    sudo apt update
+    sudo apt install libgeos-3.6.2
+    sudo apt install libgeos-dev
+    sudo apt-get install python3.8-dev # For Python3.8
     ```
 
 ## Install
@@ -50,6 +59,12 @@ Install necessary libraries.
 ```bash
 cd DLISE
 pip install -r requirements.txt
+```
+
+If failed to install `basemap`, install it additionally as follows.
+
+```bash
+pip install git+https://github.com/matplotlib/basemap.git
 ```
 
 ## Usage

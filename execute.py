@@ -259,7 +259,7 @@ class Executor(object):
         trainer.run(train_loader, validate_loader)
 
 
-    def predict(self, trained_model, device, x_dir, y_dir):
+    def predict(self, trained_model, device, x_dir):
 
         from libs.predictor import Predictor
         from utils.data_loader import CreateDataLoader
@@ -295,10 +295,61 @@ class Executor(object):
         predictor.run(data_loader)    
 
 
-    def visualize(self, x_dir, y_dir):
+    def visualize(self):
 
-        from libs.predictor import Predictor
+        from libs.visualizer import Visualizer
         from utils.data_loader import CreateDataLoader
+
+        visualizer = Visualizer(self.config, self.save_dir)
+
+        input_dir = Path(self.config.visualize.predicted_dir)
+
+        # Columns: seq_id,data_id,date,latitude,longitude
+        db = pd.read_csv(input_dir.joinpath('db.csv'), dtype={'data_id': str, 'date': str})
+
+        # Loop for each config
+        for obj in self.config.visualize.objectives:
+
+            logger.info(f'Visualizing on {obj.date} ...')
+
+            # Draw maps
+            if obj.map.draw:
+
+                for data_type in ['ssh', 'sst', 'bio']:
+
+                    nc = visualizer.load_netcdf(input_dir, obj.date, data_type)
+                    visualizer.draw_map(nc, obj, data_type)
+
+                    ##### [ToDo] Draw each section's line on maps (option)
+
+            # Draw vertical sections
+            for sec_info in obj.zonal_sections:
+
+                x, y, profiles = visualizer.prepare_section('zonal', input_dir, db, obj.date, sec_info)
+
+                # Set output path
+                lat_info = 'zonal_lat=' + str(sec_info.lat)
+                lon_info = 'lon_' + str(sec_info.lon_min) + '_' + str(sec_info.lon_max)
+
+                filename = '_'.join([lat_info, lon_info]) + '.png'
+                save_path = self.save_dir.joinpath(obj.date, filename)
+
+                visualizer.draw_section(save_path, x, y, profiles)
+
+            for sec_info in obj.meridional_sections:
+
+                x, y, profiles = visualizer.prepare_section('meridional', input_dir, db, obj.date, sec_info)
+
+                # Set output path
+                lat_info = 'meridional_lon=' + str(sec_info.lon)
+                lon_info = 'lat_' + str(sec_info.lat_min) + '_' + str(sec_info.lat_max)
+
+                filename = '_'.join([lat_info, lon_info]) + '.png'
+                save_path = self.save_dir.joinpath(obj.date, filename)
+
+                visualizer.draw_section(save_path, x, y, profiles)
+
+            ##### [ToDo] Draw all profiles
 
 
 if __name__ == '__main__':
@@ -309,7 +360,7 @@ if __name__ == '__main__':
                         nargs=None,
                         default=None,
                         type=str,
-                        choices=['preprocess', 'train', 'predict', 'webcam'])
+                        choices=['preprocess', 'train', 'predict', 'visualize'])
     parser.add_argument('-c', '--config',
                         help='Path to config.json',
                         nargs=None,
@@ -356,7 +407,8 @@ if __name__ == '__main__':
 
     if args.exec_type == 'preprocess':
         executor.preprocess(n_process=args.n_core)
-
+    elif args.exec_type == 'visualize':
+        executor.visualize()
     else:
         model, device = executor.load_model(args.gpu_id)
 
@@ -364,7 +416,4 @@ if __name__ == '__main__':
             executor.train(model, device)
 
         elif args.exec_type == 'predict':
-            executor.predict(model, device, args.x_dir, args.y_dir)
-        
-        elif args.exec_type == 'visualize':
-            pass
+            executor.predict(model, device, args.x_dir)

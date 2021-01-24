@@ -59,7 +59,7 @@ class Predictor(object):
                     with open(self.save_dir.parent.joinpath('db.csv'), 'a') as f:
                         f.write(str(n_predicted).zfill(7) + ',' +
                                 str(each_date_id[date]).zfill(7) + ',' + 
-                                str(date[0]) + ',' + 
+                                str(date) + ',' + 
                                 str(lat.item()) + ',' + 
                                 str(lon.item()) + '\n')
 

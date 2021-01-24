@@ -17,12 +17,22 @@ class Config(object):
         _input_size = 224
         _objective = 'temperature' # 'temperature' or 'salinity'
         # Requirements : preprocess
+        """
         _preprocess_ssh_input_dir = '/PATH/TO/SSH/DIRECTORY'
         _preprocess_sst_input_dir = '/PATH/TO/SST/DIRECTORY'
         _preprocess_bio_input_dir = '/PATH/TO/BIO/DIRECTORY'
         _preprocess_argo_input_dir = '/PATH/TO/ARGO/DIRECTORY'
+        """
+        _preprocess_ssh_input_dir = '/archive/DLISE/download/20210117/ssh'
+        _preprocess_sst_input_dir = '/archive/DLISE/download/20210117/sst'
+        _preprocess_bio_input_dir = '/archive/DLISE/download/20210117/bio'
+        _preprocess_argo_input_dir = '/archive/DLISE/download/20210117/argo'
+        _preprocess_save_dir = None
         # Requirements : train
+        """
         _train_input_dir = '/PATH/TO/DATA/DIRECTORY'
+        """
+        _train_input_dir = './data_storage/2021-0120-0112-4935'
         _train_save_dir = None
 
         self.model = {
@@ -117,6 +127,113 @@ class Config(object):
             'save_results': True
         }
 
+        self.visualize = {
+            #'predicted_dir': '/PATH/TO/PREDICTION/DIR',
+            'predicted_dir': './results/predict/2021-0125-0233-5371',
+            'objectives': [
+                {
+                    'date': '20201001',
+                    'map': {
+                        'draw': True,
+                        'lat_min': 10,
+                        'lat_max': 40,
+                        'lon_min': 140,
+                        'lon_max': 220
+                    },
+                    'draw_lines_on_map': True,
+                    'zonal_sections': [
+                        {
+                            'lat': 20,
+                            'lon_min': 170,
+                            'lon_max': 180,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                        {
+                            'lat': 30,
+                            'lon_min': 180,
+                            'lon_max': 190,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                        {
+                            'lat': 40,
+                            'lon_min': 190,
+                            'lon_max': 200,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                    ],
+                    'meridional_sections': [
+                        {
+                            'lon': 150,
+                            'lat_min': 20,
+                            'lat_max': 30,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                        {
+                            'lon': 160,
+                            'lat_min': 30,
+                            'lat_max': 40,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                    ]
+                },
+                {
+                    'date': '20201015',
+                    'map': {
+                        'draw': True,
+                        'lat_min': 10,
+                        'lat_max': 40,
+                        'lon_min': 140,
+                        'lon_max': 220
+                    },
+                    'draw_lines_on_map': True,
+                    'zonal_sections': [
+                        {
+                            'lat': 20,
+                            'lon_min': 170,
+                            'lon_max': 180,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                        {
+                            'lat': 30,
+                            'lon_min': 180,
+                            'lon_max': 190,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                        {
+                            'lat': 40,
+                            'lon_min': 190,
+                            'lon_max': 200,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                    ],
+                    'meridional_sections': [
+                        {
+                            'lon': 150,
+                            'lat_min': 20,
+                            'lat_max': 30,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                        {
+                            'lon': 160,
+                            'lat_min': 30,
+                            'lat_max': 40,
+                            'pre_min': 10,
+                            'pre_max': 1000
+                        },
+                    ]
+                }
+            ]
+        }
+
     def build_config(self):
 
         config = {
@@ -124,6 +241,7 @@ class Config(object):
             'preprocess': self.preprocess,
             'train': self.train,
             'predict': self.predict,
+            'visualize': self.visualize,
         }
 
         logger.info(config)
