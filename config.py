@@ -34,6 +34,11 @@ class Config(object):
         """
         _train_input_dir = './data_storage/2021-0120-0112-4935'
         _train_save_dir = None
+        # Requirements : evaluate
+        """
+        _evaluate_input_dir = '/PATH/TO/DATA/DIRECTORY'
+        """
+        _evaluate_input_dir = './data_storage/2021-0120-0112-4935'
 
         self.model = {
             'backbone_pretrained': _backbone_pretrained,
@@ -95,6 +100,14 @@ class Config(object):
                     'amsgrad': False
                 }
             }
+        }
+
+        self.evaluate = {
+            #'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',
+            'trained_weight_path': './results/train/2021-0120-0138-1097/weights/weight-00305_0.00185_0.00111.pth',
+            'objective': _objective,
+            'input_dir': _evaluate_input_dir,
+            'n_figure': 100
         }
 
         self.predict = {
@@ -240,6 +253,7 @@ class Config(object):
             'model': self.model,
             'preprocess': self.preprocess,
             'train': self.train,
+            'evaluate': self.evaluate,
             'predict': self.predict,
             'visualize': self.visualize,
         }

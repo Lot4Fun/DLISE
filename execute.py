@@ -52,7 +52,7 @@ class Executor(object):
 
     def __init__(self, exec_type, config=None, y_dir=None):
 
-        assert exec_type in ['preprocess', 'train', 'predict', 'visualize'], 'exec_type is not correct.'
+        assert exec_type in ['preprocess', 'train', 'evaluate', 'predict', 'visualize'], 'exec_type is not correct.'
 
         self.exec_type = exec_type
         if config:
@@ -228,9 +228,11 @@ class Executor(object):
         # Load pre-trained weight
         if self.exec_type == 'train':
             weight_path = self.config.train.resume_weight_path
+        elif self.exec_type == 'evaluate':
+            weight_path = self.config.evaluate.trained_weight_path
         else:
             weight_path = self.config.predict.trained_weight_path
-            
+
         if Path(weight_path).exists() and Path(weight_path).suffix == '.pth':
             if on_multi_gpu:
                 model.module.load_weights(weight_path)
@@ -257,6 +259,20 @@ class Executor(object):
 
         trainer = Trainer(model, device, self.config, self.save_dir)
         trainer.run(train_loader, validate_loader)
+
+
+    def evaluate(self, model, device):
+
+        from libs.evaluator import Evaluator
+        from utils.data_loader import CreateDataLoader
+        from utils.common import CommonUtils
+
+        self.save_dir.joinpath(self.config.evaluate.objective).mkdir(exist_ok=True, parents=True)
+
+        eval_loader = CreateDataLoader.build_for_evaluate(self.exec_type, self.config)
+
+        evaluator = Evaluator(model, device, self.config, self.save_dir)
+        evaluator.run(eval_loader)
 
 
     def predict(self, trained_model, device, x_dir):
@@ -360,7 +376,7 @@ if __name__ == '__main__':
                         nargs=None,
                         default=None,
                         type=str,
-                        choices=['preprocess', 'train', 'predict', 'visualize'])
+                        choices=['preprocess', 'train', 'evaluate', 'predict', 'visualize'])
     parser.add_argument('-c', '--config',
                         help='Path to config.json',
                         nargs=None,
@@ -414,6 +430,7 @@ if __name__ == '__main__':
 
         if args.exec_type == 'train':
             executor.train(model, device)
-
+        elif args.exec_type == 'evaluate':
+            executor.evaluate(model, device)
         elif args.exec_type == 'predict':
             executor.predict(model, device, args.x_dir)

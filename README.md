@@ -31,19 +31,16 @@ In addition to following system requeirements, you need to create [Copernicus Ma
     Cuda compilation tools, release 10.2, V10.2.89
     ```
 
-- lhasa (`lha` command is necessary to decompress lzh files)
-
-    ```bash
-    sudo apt install lhasa
-    ```
-
-- libgeos, libgeos-dev, python3.X-dev (These are necessary for `basemap`)
+- Other modules
+    - lhasa (`lha` command is necessary to decompress lzh files)
+    - libgeos, libgeos-dev, python3.X-dev (These are necessary for `basemap` library)
 
     ```bash
     sudo apt update
+    sudo apt install lhasa
     sudo apt install libgeos-3.6.2
     sudo apt install libgeos-dev
-    sudo apt-get install python3.8-dev # For Python3.8
+    sudo apt install python3.8-dev # For Python3.8
     ```
 
 ## Install
@@ -61,7 +58,7 @@ cd DLISE
 pip install -r requirements.txt
 ```
 
-If failed to install `basemap`, install it additionally as follows.
+After installing libraries except `basemap`, install it additionally as follows.
 
 ```bash
 pip install git+https://github.com/matplotlib/basemap.git
@@ -285,4 +282,102 @@ After running the above command, you can see directory structure in the specifie
 
     ```bash
     python execute.py predict -c /PATH/TO/config.json -x /INPUT/DIR [-y /OUTPUT/DIR]
+    ```
+
+### Visualization
+
+1. Modify [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
+
+
+    ```python
+    self.visualize = {
+        'predicted_dir': '/PATH/TO/PREDICTION/DIR',
+        'objectives': [
+            {
+                'date': '20201001',
+                'map': {
+                    'draw': True,
+                    'lat_min': 10,
+                    'lat_max': 40,
+                    'lon_min': 140,
+                    'lon_max': 220
+                },
+                'draw_lines_on_map': True,
+                'zonal_sections': [
+                    {
+                        'lat': 20,
+                        'lon_min': 170,
+                        'lon_max': 180,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    },
+                    {
+                        'lat': 30,
+                        'lon_min': 180,
+                        'lon_max': 190,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    }
+                ],
+                'meridional_sections': [
+                    {
+                        'lon': 150,
+                        'lat_min': 20,
+                        'lat_max': 30,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    },
+                    {
+                        'lon': 160,
+                        'lat_min': 30,
+                        'lat_max': 40,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    },
+                ]
+            },
+            {
+                'date': '20201015',
+                'map': {
+                    'draw': True,
+                    'lat_min': 10,
+                    'lat_max': 40,
+                    'lon_min': 140,
+                    'lon_max': 220
+                },
+                'draw_lines_on_map': True,
+                'zonal_sections': [
+                    {
+                        'lat': 20,
+                        'lon_min': 170,
+                        'lon_max': 180,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    }
+                ],
+                'meridional_sections': [
+                    {
+                        'lon': 150,
+                        'lat_min': 20,
+                        'lat_max': 30,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    },
+                    {
+                        'lon': 160,
+                        'lat_min': 30,
+                        'lat_max': 40,
+                        'pre_min': 10,
+                        'pre_max': 1000
+                    },
+                ]
+            }
+        ]
+    }
+    ```
+
+2. Run script in visualization mode.
+
+    ```bash
+    python execute.py visualize
     ```

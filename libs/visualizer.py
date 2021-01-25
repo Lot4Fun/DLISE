@@ -209,10 +209,9 @@ class Visualizer(object):
         plt.figure(figsize=(20,15))
         plt.contourf(x, y, z, levels=self.sst_color_range(z, interval=1), cmap='jet')
         plt.contour(x, y, z, levels=self.sst_color_range(z, interval=1), linewidths=0.5, colors='black')
-        #plt.contour(x, y, z, levels=self.sst_color_range(z, interval=2), linewidths=1, colors='black')
         
-        ##### [ToDo] Add title
-        #plt.title(title)
+        ##### [ToDo] Modify hard-coding
+        plt.title('Temperature')
         plt.ylim([1000, 10])
 
         plt.savefig(save_path, bbox_inches='tight')
