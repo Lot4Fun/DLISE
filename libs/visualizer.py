@@ -211,6 +211,8 @@ class Visualizer(object):
         plt.contour(x, y, z, levels=self.sst_color_range(z, interval=1), linewidths=0.5, colors='black')
         #plt.contour(x, y, z, levels=self.sst_color_range(z, interval=2), linewidths=1, colors='black')
         
+        ##### [ToDo] Add title
+        #plt.title(title)
         plt.ylim([1000, 10])
 
         plt.savefig(save_path, bbox_inches='tight')
