@@ -204,6 +204,7 @@ After running the above command, you can see directory structure in the specifie
         'epoch': 1000,
         'shuffle': True,
         'weight_save_period': 5,
+        'weighted_loss': True,
         'optimizer': {
             'optim_type': 'adam',
             'sgd': {
@@ -235,6 +236,30 @@ After running the above command, you can see directory structure in the specifie
     ```bash
     # Example: Use two GPUs (0 and 1)
     python execute.py train -g 0,1
+    ```
+
+### Evaluation
+
+1. Modify `Requirements` and other parameters in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py). Input directory is the directory created in train phase.
+
+    ```python
+    # Requirements : evaluate
+    _evaluate_input_dir = '/PATH/TO/DATA/DIRECTORY'
+    ```
+
+    ```python
+    self.evaluate = {
+        'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',
+        'objective': _objective,
+        'input_dir': _evaluate_input_dir,
+        'n_figure': 100 # The number of profile figures
+    }
+    ```
+
+2. Run script in evaluation mode.
+
+    ```bash
+    python execute.py evaluate
     ```
 
 ### Prediction

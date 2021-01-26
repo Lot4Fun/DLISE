@@ -83,6 +83,7 @@ class Config(object):
             'epoch': 1000,
             'shuffle': True,
             'weight_save_period': 5,
+            'weighted_loss': True,
             'optimizer': {
                 'optim_type': 'adam',
                 'sgd': {

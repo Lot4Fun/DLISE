@@ -3,6 +3,10 @@
 
 from logging import getLogger
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path('__file__').resolve().parent))
+
 import torch
 import torch.nn as nn
 from torch import optim
@@ -22,7 +26,16 @@ class Trainer(object):
 
     def run(self, train_loader, valid_loader):
 
-        loss_fn =nn.L1Loss()
+        if self.config.train.weighted_loss:
+
+            from utils.loss import WeightedLoss
+
+            loss_fn = WeightedLoss(self.device,
+                                   self.config.preprocess.interpolation.pre_min,
+                                   self.config.preprocess.interpolation.pre_max,
+                                   self.config.preprocess.interpolation.pre_interval,)
+        else:
+            loss_fn = nn.L1Loss()
 
         optimizer = Optimizers.get_optimizer(self.config.train.optimizer, self.model.parameters())
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10)
