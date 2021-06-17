@@ -4,67 +4,42 @@
 
 Sea surface features are strongly related to vertical structure in the ocean (Ex. temperature, salinity, potential density, etc). This trial attempts to predict the vertical structure (temperature and salinity) from sea surface height (SSH) and temperature (SST) by Deep Learning. We assume that Argo profiles are obtained in the North Pacific Subtropical Gyre since internal structures in the ocean depend on the region.
 
-Spacial resolution of our dataset is .25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to predict the difference in the order of meso-scale (~100km).
+Spacial resolution of our dataset is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to predict the difference in the order of meso-scale (~100km).
 
 Proposed method predicts three-dimensional grid data with only in-situ observation data (Argo profiles) and do not use any numerical simulation model (Ex. [OFES](http://www.jamstec.go.jp/ofes/)).
 
-## Requirement
+## Prerequisites
 
-In addition to following system requeirements, you need to create [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) account and get login ID and PASSWORD.
+- Docker 20.10.7
 
-- Python 3.8
+In addition to above system requeirements, you need to create [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) account and get login ID and PASSWORD.
 
-    ```text
-    $ python
-    Python 3.8.0 (default, Oct 28 2019, 16:14:01) 
-    [GCC 8.3.0] on linux
-    Type "help", "copyright", "credits" or "license" for more information.
-    ```
+## Installation
 
-- CUDA 10.2
+This repogitory will run on the Docker container.
 
-    ```text
-    $ nvcc -V
-    nvcc: NVIDIA (R) Cuda compiler driver
-    Copyright (c) 2005-2019 NVIDIA Corporation
-    Built on Wed_Oct_23_19:24:38_PDT_2019
-    Cuda compilation tools, release 10.2, V10.2.89
-    ```
-
-- Other modules
-    - lhasa (`lha` command is necessary to decompress lzh files)
-    - libgeos, libgeos-dev, python3.X-dev (These are necessary for `basemap` library)
-
-    ```bash
-    sudo apt update
-    sudo apt install lhasa
-    sudo apt install libgeos-3.6.2
-    sudo apt install libgeos-dev
-    sudo apt install python3.8-dev # For Python3.8
-    ```
-
-## Install
-
-Clone this repository.
+### Build Docker image
 
 ```bash
 git clone https://github.com/pystokes/DLISE.git
-```
-
-Install necessary libraries.
-
-```bash
 cd DLISE
-pip install -r requirements.txt
+docker build -t dlise .
 ```
 
-After installing libraries except `basemap`, install it additionally as follows.
+### Run Docker container
 
 ```bash
-pip install git+https://github.com/matplotlib/basemap.git
+# If you need to download data, need to make directory to store downloaded data.
+mkdir -p /archive/DLISE
+# Run and enter the container.
+docker run -it --rm -v /PATH/TO/DLISE/:/DLISE/ -v /archive/DLISE:/archive/DLISE dlise /bin/bash
 ```
 
 ## Usage
+
+Commands in this section must be run in the docker container.
+
+### GPU setting
 
 Only the following patterns to load trained weights are supported.
 

@@ -32,13 +32,13 @@ class Config(object):
         """
         _train_input_dir = '/PATH/TO/DATA/DIRECTORY'
         """
-        _train_input_dir = './data_storage/2021-0120-0112-4935'
+        _train_input_dir = './data_storage/2021-0617-1324-5831'
         _train_save_dir = None
         # Requirements : evaluate
         """
         _evaluate_input_dir = '/PATH/TO/DATA/DIRECTORY'
         """
-        _evaluate_input_dir = './data_storage/2021-0120-0112-4935'
+        _evaluate_input_dir = './data_storage/2021-0617-1324-5831'
 
         self.model = {
             'backbone_pretrained': _backbone_pretrained,
@@ -63,12 +63,12 @@ class Config(object):
                 'meridional': 4 # -meridional/2 to +meridional\2 in degree
             },
             'argo': { # Extract argo profiles in the following region and term
-                'lat_min': 10, # Default: 35
+                'lat_min': 35, # Default: 35
                 'lat_max': 40, # Default: 40
                 'lon_min': 140, # Default: 140
-                'lon_max': 220, # Default: 180
+                'lon_max': 180, # Default: 180
                 'date_min': '2018-01-01',
-                'date_max': '2021-01-17'                
+                'date_max': '2021-01-17'
             }
         }
 
