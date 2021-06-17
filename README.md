@@ -8,7 +8,7 @@ Spacial resolution of our dataset is 0.25 degree x 0.25 degree and it is not eno
 
 Proposed method predicts three-dimensional grid data with only in-situ observation data (Argo profiles) and do not use any numerical simulation model (Ex. [OFES](http://www.jamstec.go.jp/ofes/)).
 
-## Data
+## Dataset
 
 We use following datasets:
 
