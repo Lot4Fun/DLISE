@@ -12,7 +12,7 @@ Proposed method predicts three-dimensional grid data with only in-situ observati
 
 We use following datasets:
 
-- Sea Surface Temperature, Hight and Chlorophyll
+- Sea Surface Temperature, Height and Chlorophyll
   - Download from [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) 
   - Spatial resolution : 0.25 x 0.25 grid
   - Time resolution : Daily
