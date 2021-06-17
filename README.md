@@ -8,17 +8,35 @@ Spacial resolution of our dataset is 0.25 degree x 0.25 degree and it is not eno
 
 Proposed method predicts three-dimensional grid data with only in-situ observation data (Argo profiles) and do not use any numerical simulation model (Ex. [OFES](http://www.jamstec.go.jp/ofes/)).
 
-## Prerequisites
+## Data
+
+We use following datasets:
+
+- Sea Surface Temperature, Hight and Chlorophyll
+  - Download from [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) 
+  - Spatial resolution : 0.25 x 0.25 grid
+  - Time resolution : Daily
+- Argo float
+  - [North Pacific Argo Float Data Set](https://ocg.aori.u-tokyo.ac.jp/member/eoka/data/NPargodata/) published by [OKA Eitarou](https://ocg.aori.u-tokyo.ac.jp/member/eoka/)
+  - We interpolate profile data by Akima spline
+
+## Brief results
+
+IN PRODUCTION
+
+## System information
+
+### Prerequisites
 
 - Docker 20.10.7
 
 In addition to above system requeirements, you need to create [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) account and get login ID and PASSWORD.
 
-## Installation
+### Installation
 
 This repogitory will run on the Docker container.
 
-### Build Docker image
+#### Build Docker image
 
 ```bash
 git clone https://github.com/pystokes/DLISE.git
@@ -26,7 +44,7 @@ cd DLISE
 docker build -t dlise .
 ```
 
-### Run Docker container
+#### Run Docker container
 
 ```bash
 # If you need to download data, need to make directory to store downloaded data.
@@ -35,11 +53,11 @@ mkdir -p /archive/DLISE
 docker run -it --rm -v /PATH/TO/DLISE/:/DLISE/ -v /archive/DLISE:/archive/DLISE dlise /bin/bash
 ```
 
-## Usage
+### Usage
 
 Commands in this section must be run in the docker container.
 
-### GPU setting
+#### GPU setting
 
 Only the following patterns to load trained weights are supported.
 
@@ -50,7 +68,7 @@ Only the following patterns to load trained weights are supported.
 |Not supported|Single-GPU|Multi-GPU|
 |:heavy_check_mark:|Multi-GPU|Multi-GPU|
 
-### Download dataset
+#### Download dataset
 
 Change configuratoin in [`tools/download_dataset.sh`](https://github.com/pystokes/DLISE/blob/master/tools/download_dataset.sh). See the shellscript file for examples.
 
@@ -106,7 +124,7 @@ After running the above command, you can see directory structure in the specifie
        └── ...
 ```
 
-### Preprocess
+#### Preprocess
 
 1. Modify `Requirements` in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
 
@@ -151,7 +169,7 @@ After running the above command, you can see directory structure in the specifie
             └── ...
     ```
 
-### Train
+#### Train
 
 1. Modify `Requirements` in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
 
@@ -213,7 +231,7 @@ After running the above command, you can see directory structure in the specifie
     python execute.py train -g 0,1
     ```
 
-### Evaluation
+#### Evaluation
 
 1. Modify `Requirements` and other parameters in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py). Input directory is the directory created in train phase.
 
@@ -237,7 +255,7 @@ After running the above command, you can see directory structure in the specifie
     python execute.py evaluate
     ```
 
-### Prediction
+#### Prediction
 
 1. Set path to trained weights at the `trained_weight_path` in the `config.json` created in train phase.
 
@@ -284,7 +302,7 @@ After running the above command, you can see directory structure in the specifie
     python execute.py predict -c /PATH/TO/config.json -x /INPUT/DIR [-y /OUTPUT/DIR]
     ```
 
-### Visualization
+#### Visualization
 
 1. Modify [config.py](https://github.com/pystokes/DLISE/blob/master/config.py) at first.
 
