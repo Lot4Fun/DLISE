@@ -4,7 +4,7 @@
 
 Sea surface features are strongly related to vertical structure in the ocean (Ex. temperature, salinity, potential density, etc). This trial attempts to predict the vertical structure (temperature and salinity) from sea surface height (SSH) and temperature (SST) by Deep Learning. We assume that Argo profiles are obtained in the North Pacific Subtropical Gyre since internal structures in the ocean depend on the region.
 
-Spacial resolution of our dataset is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to predict the difference in the order of meso-scale (~100km).
+Spatial resolution of our dataset is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to predict the difference in the order of meso-scale (~100km).
 
 Proposed method predicts three-dimensional grid data with only in-situ observation data (Argo profiles) and do not use any numerical simulation model (Ex. [OFES](http://www.jamstec.go.jp/ofes/)).
 
