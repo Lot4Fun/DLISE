@@ -88,13 +88,11 @@ class Config(object):
                 'optim_type': 'adam',
                 'sgd': {
                     'lr': 5e-4,
-                    'wait_decay_epoch': 100,
                     'momentum': 0.9,
                     'weight_decay': 5e-4,
-                    'T_max': 10
                 },
                 'adam': {
-                    'lr': 0.001,
+                    'lr': 0.0001,
                     'betas': (0.9, 0.999),
                     'eps': 1e-08,
                     'weight_decay': 0,
@@ -105,7 +103,7 @@ class Config(object):
 
         self.evaluate = {
             #'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',
-            'trained_weight_path': './results/train/2021-0120-0138-1097/weights/weight-00305_0.00185_0.00111.pth',
+            'trained_weight_path': './results/train/2021-0128-0041-5374/weights/weight-00225_0.98844_0.44609.pth',
             'objective': _objective,
             'input_dir': _evaluate_input_dir,
             'n_figure': 100

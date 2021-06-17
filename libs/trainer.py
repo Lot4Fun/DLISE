@@ -93,7 +93,7 @@ class Trainer(object):
         # Keep track of validation loss
         valid_loss = 0.0
 
-        # Not use gradient for inference
+        # Do not use gradient for inference
         self.model.eval()
         with torch.no_grad():
 

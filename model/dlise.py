@@ -22,7 +22,7 @@ class DLISE(nn.Module):
         self.backbone = nn.Sequential(*list(models.resnet50(pretrained=self.config.model.backbone_pretrained).children())[:-1])
 
         self.fc_layers = nn.Sequential(
-            nn.Linear(in_features=2048, out_features=1024, bias=True),
+            nn.Linear(in_features=2048+2, out_features=1024, bias=True),
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(in_features=1024, out_features=512, bias=True),
@@ -38,6 +38,7 @@ class DLISE(nn.Module):
 
         x = self.backbone(maps)
         x = x.view(x.size(0), -1)
+        x = torch.cat([x, lats/90, lons/360], dim=1)
         x = self.fc_layers(x)
 
         return x
@@ -45,19 +46,17 @@ class DLISE(nn.Module):
     def init_weights(self):
 
         self.backbone.apply(self.init_conv_layer)
-        logger.info('Intialized backbone')
+        logger.info('Finished intializing conv layers in backbone.')
 
     def init_conv_layer(self, layer):
 
         if isinstance(layer, nn.Conv2d):
             self.xavier(layer.weight.data)
 
-
     def xavier(self, param):
 
         init.xavier_uniform_(param)
         
-
     def load_weights(self, trained_weights):
 
         state_dict = torch.load(trained_weights, map_location=lambda storage, loc: storage)
