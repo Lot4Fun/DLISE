@@ -16,9 +16,19 @@ We use following datasets:
   - Download from [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) 
   - Spatial resolution : 0.25 x 0.25 grid
   - Time resolution : Daily
+  - Data aggregation:
+    1. Crop sea surface data to a specified square size. (Ex. 4 x 4 degree)
+    2. Find the closest Argo profile to the center of the cropped data and use it as the vertical profile corresponding to the cropped data.
 - Argo float
   - [North Pacific Argo Float Data Set](https://ocg.aori.u-tokyo.ac.jp/member/eoka/data/NPargodata/) published by [OKA Eitarou](https://ocg.aori.u-tokyo.ac.jp/member/eoka/)
   - We interpolate profile data by Akima spline
+
+## Training setting
+
+Our method is supervized training of:
+
+- Input : Crroped sea surface temperature, height and chlorophyll map data
+- Ground truth : Corresponding vertical profile
 
 ## Brief results
 
