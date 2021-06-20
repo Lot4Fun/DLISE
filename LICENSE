@@ -1,6 +1,18 @@
-MIT License
+Non-commercial purposes only with MIT License
 
 Copyright (c) 2019 pystokes
+
+This software conforms to the MIT License,
+but the following two points are additionally prohibited.
+
+1. Non-commercial use only
+Everyone can use this software in accordance with the MIT License,
+but commercial use is prohibited.
+
+2. Prohibition of publishing research results equivalent to this repository.
+Since all rights related to the results by this software belong to the author,
+it is prohibited to publish research results equivalent to those in this repository.
+This prohibition does not apply if you modified this software and got a new contribution.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
