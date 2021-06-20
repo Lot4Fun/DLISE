@@ -38,7 +38,7 @@ class Config(object):
         """
         _evaluate_input_dir = '/PATH/TO/DATA/DIRECTORY'
         """
-        _evaluate_input_dir = './data_storage/2021-0617-1324-5831'
+        _evaluate_input_dir = './data_storage/2021-0120-0112-4935'
 
         self.model = {
             'backbone_pretrained': _backbone_pretrained,
@@ -103,7 +103,7 @@ class Config(object):
 
         self.evaluate = {
             #'trained_weight_path': '/PATH/TO/PRETRAINED/WEIGHT',
-            'trained_weight_path': './results/train/2021-0128-0041-5374/weights/weight-00225_0.98844_0.44609.pth',
+            'trained_weight_path': './results/train/2021-0128-0041-5374/best.pth',
             'objective': _objective,
             'input_dir': _evaluate_input_dir,
             'n_figure': 100

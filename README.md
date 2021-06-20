@@ -6,7 +6,7 @@ Vertical structure in the ocean are related to sea surface features (Ex. height,
 
 We use Argo profile and sea surface height, temperature and chlorophyll. Spatial resolution of sea surface data is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to estimate the difference in the order of meso-scale (~100km). Although this dataset can not resolve submeso-scale impact, shallow layers are more sensitive to the influence of subme-socale dynamics. To take this into account and estimate shallow layer profile more correctly, we use sea surface chlorophyll since it is expected to be relatively influenced by the submeso-scale dynamics.
 
-Our prposed method have two contributions: first, our method estimates internal structure with from only sea surface data. Our approach may enables us to obtain more internal structure data with higher frequency and spatial density than can be obtained with the current Argo program. On the other hand, since this method requires a large amount of Argo profile to estimate the internal structure, our study argues the importance of the Argo program and the need for further development. Second, we show the importance of the application of machine learning on the oceanography. In recent years, although the Argo program has enriched the ocean observation data, they are limited in temporal and spatial resolution, especially for in-situ observation data. To monitoring the state of ocean, satellite observations can provide a wide range of high-frequency data, however they are limited to the sea surface and insufficient to understand the entire ocean. In our study, we will try to link sea surface data by satellite with data of the interior of the ocean. Our method will allow us to estimate more frequent and dense data in the interior of the ocean, and we hope to gain a more detailed understanding of the ocean.
+Our prposed method have two contributions: first, our method estimates internal structure with from only sea surface data. Our approach may enables us to obtain more internal structure data with higher frequency and spatial density than can be obtained with the current Argo program. On the other hand, since this method requires a large amount of Argo profiles, our study argues the importance of the Argo program and the need for further development. Second, we show the importance of the application of machine learning on the oceanography. In recent years, although we can get more dataset in the ocean, they are limited in temporal and spatial resolution. To monitoring the state of ocean, satellite observations can provide a wide range of high-frequency data, however they are limited to the sea surface and insufficient to understand the entire ocean. In our study, we will try to link sea surface data by satellite with data of the interior of the ocean. Our method indicates the potential to obtain more frequent and dense data in the interior of the ocean, and we hope to gain a more detailed understanding of the ocean.
 
 ## Dataset
 
@@ -14,12 +14,12 @@ We use following datasets:
 
 - Sea Surface Temperature, Height and Chlorophyll
   - Download from [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) 
-  - Spatial resolution : 0.25 x 0.25 grid
+  - Spatial resolution : 0.25 x 0.25 degrees
   - Time resolution : Daily
   - Data aggregation:
     1. Crop sea surface data to a specified square size. (Ex. 4 x 4 degree)
     2. Find the closest Argo profile to the center of the cropped data and use it as the vertical profile corresponding to the cropped data.
-- Argo float
+- Argo profile
   - [North Pacific Argo Float Data Set](https://ocg.aori.u-tokyo.ac.jp/member/eoka/data/NPargodata/) published by [OKA Eitarou](https://ocg.aori.u-tokyo.ac.jp/member/eoka/)
   - We interpolate profile data by Akima spline
 - Other information
@@ -29,7 +29,7 @@ We use following datasets:
     - Since the oceans have seasonal variability, it is impossible to determine whether the differences are temporal or spatial without taking into account temporal information.
     - __Since the latitude, longitude and sea surface information are considered to indirectly contain temporal information, we have not explicitly implemented yet at this time.__
 
-## Training setting
+## Training information
 
 Our method is supervized training of:
 
@@ -38,7 +38,54 @@ Our method is supervized training of:
 
 ## Brief results
 
-IN PRODUCTION
+### Training setting
+
+- Common information
+  - Latitude : 10 - 40
+  - Longitude : 140 - 220
+  - Period (Train and Validation):
+    - Begin : 2018-01-01
+    - End   : 2019-12-31
+  - Period (Test):
+    - Begin : 2020-01-01
+    - End   : 2021-01-17
+  - Train-Validation split
+    - Train : Validation = 0.75 : 0.25
+    - Shuffle before splitting
+- Sea surface data
+  - Height, temperature and chlorophyll
+  - Crop resolution : 4 x 4 degrees
+- Argo prifile
+  - min 10 max 1000 interval 10
+
+### Evaluation results
+
+In this section, we compare profiles of ground truth and estimated.
+
+- Ground truth : Red line
+- Estimated : Blue line
+
+#### Better cases
+
+Following results are better estimations. We show typical patterns: relatively little change in the vertical direction (Left), significant changing in the intermediate layer (Center) and significant overall changing (Right).
+
+![Fig.1](figs/fig1_betters.png)
+
+#### Bad cases
+
+The two graphs on the left can not estimate the changes in the shallow layers. On the other hand, the two graphs on the right can not estimate well to relatively deep layers.
+
+![Fig.2](figs/fig2_bad1.png)
+
+We show slightly different difficulties. Although the above four graphs indicated incorrect estimations, following results show the difficulties of small scale dyamics. The two graphs on the left can not estimate small scale changes in the layer shallower than 400 dbar. Two graphs on the right shows smaller scale changes in the layer above 200 dbar.
+
+As mentioned in the overview section, the spatial resolution of satellite data is 0.25 x 0.25 degrees, and since our target is to correctly estimate mesoscale variability, estimating such small scale variabiliiesy is considered difficult by current satellite data.
+
+![Fig.3](figs/fig3_bad2.png)
+
+### Conclusion
+
+Our proposed method with Machine Learning (Deep Learning) indicated the potential to estimate internal structures of the ocean by using only sattelite data. Since this deep learning model is relatively simple (fully convolutional backbone and some full connection layers), the direct implementation of physical phenomena into the model is expected to improve the accuracy of the estimation. We treated physical parameters and chlorophyll in the same way, but biogeochemical parameters such as chlorophyll are relatively strongly influenced by smaller scale phenomena. Therefore, building a model that can handle these parameters well will also allow us to estimate the internal structure more accurately.
 
 ## System information
 
