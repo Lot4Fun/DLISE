@@ -25,9 +25,9 @@ We use following datasets:
 - Other information
   - Location (latitude and longitude)
     - State of the ocean are strongly related to the location. For example, low temperature in high latitudes, high temperature in low latitudes.
-  - Temporal (seasonal) information (__NOT EXPLICITLY IMPLEMENTED YET__)
+  - Temporal (seasonal) information (__NOT EXPLICITLY IMPLEMENTED__)
     - Since the oceans have seasonal variability, it is impossible to determine whether the differences are temporal or spatial without taking into account temporal information.
-    - __Since the latitude, longitude and sea surface information are considered to indirectly contain temporal information, we have not explicitly implemented yet at this time.__
+    - __Since the combination of latitude, longitude and sea surface data is considered to indirectly contain temporal information, we do not explicitly implemented it.__
 
 ## Training information
 
