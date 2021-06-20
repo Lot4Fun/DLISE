@@ -66,7 +66,7 @@ docker build -t dlise .
 # If you need to download data, need to make directory to store downloaded data.
 mkdir -p /archive/DLISE
 # Run and enter the container.
-docker run -it --rm -v /PATH/TO/DLISE/:/DLISE/ -v /archive/DLISE:/archive/DLISE dlise /bin/bash
+docker run -it --rm -v /PATH/TO/DLISE/:/DLISE/ -v /archive/DLISE/:/archive/DLISE/ dlise /bin/bash
 ```
 
 ### Usage
