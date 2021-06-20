@@ -2,11 +2,11 @@
 
 ## Overview
 
-Sea surface features are strongly related to vertical structure in the ocean (Ex. temperature, salinity, potential density, etc). This trial attempts to predict the vertical structure (temperature and salinity) from sea surface height (SSH) and temperature (SST) by Deep Learning. We assume that Argo profiles are obtained in the North Pacific Subtropical Gyre since internal structures in the ocean depend on the region.
+Vertical structure in the ocean are related to sea surface features (Ex. height, temperature, chlorophyll, etc). This trial attempts to estimate the vertical structure (temperature and salinity) from sea surface features by Deep Learning. We adapt our proposed method to the region of the North Pacific Subtropical Gyre since sea surface and internal structures vary by location.
 
-Spatial resolution of our dataset is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to predict the difference in the order of meso-scale (~100km).
+We use Argo profile and sea surface height, temperature and chlorophyll. Spatial resolution of sea surface data is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to estimate the difference in the order of meso-scale (~100km). Although this dataset can not resolve submeso-scale impact, shallow layers are more sensitive to the influence of subme-socale dynamics. To take this into account and estimate shallow layer profile more correctly, we use sea surface chlorophyll since it is expected to be relatively influenced by the submeso-scale dynamics.
 
-Proposed method predicts three-dimensional grid data with only in-situ observation data (Argo profiles) and do not use any numerical simulation model (Ex. [OFES](http://www.jamstec.go.jp/ofes/)).
+Our prposed method have two contributions: first, our method estimates internal structure with from only sea surface data. Our approach may enables us to obtain more internal structure data with higher frequency and spatial density than can be obtained with the current Argo program. On the other hand, since this method requires a large amount of Argo profile to estimate the internal structure, our study argues the importance of the Argo program and the need for further development. Second, we show the importance of the application of machine learning on the oceanography. In recent years, although the Argo program has enriched the ocean observation data, they are limited in temporal and spatial resolution, especially for in-situ observation data. To monitoring the state of ocean, satellite observations can provide a wide range of high-frequency data, however they are limited to the sea surface and insufficient to understand the entire ocean. In our study, we will try to link sea surface data by satellite with data of the interior of the ocean. Our method will allow us to estimate more frequent and dense data in the interior of the ocean, and we hope to gain a more detailed understanding of the ocean.
 
 ## Dataset
 
@@ -22,6 +22,11 @@ We use following datasets:
 - Argo float
   - [North Pacific Argo Float Data Set](https://ocg.aori.u-tokyo.ac.jp/member/eoka/data/NPargodata/) published by [OKA Eitarou](https://ocg.aori.u-tokyo.ac.jp/member/eoka/)
   - We interpolate profile data by Akima spline
+- Other information
+  - Location (latitude and longitude)
+    - State of the ocean are strongly related to the location. For example, low temperature in high latitudes, high temperature in low latitudes.
+  - Time (seasonal) information (__NOT IMPREMENTED YET__)
+    - Since the oceans have seasonal variability, it is impossible to determine whether the differences are temporal or spatial without taking into account temporal information.
 
 ## Training setting
 
