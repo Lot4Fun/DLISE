@@ -58,7 +58,7 @@ Our method is supervized training of:
 - Argo prifile
   - min 10 max 1000 interval 10
 
-### Evaluation results
+### Estimated results (prifiles)
 
 In this section, we compare profiles of ground truth and estimated.
 
@@ -83,9 +83,39 @@ As mentioned in the overview section, the spatial resolution of satellite data i
 
 ![Fig.3](figs/fig3_bad2.png)
 
+### Estimation examples
+
+#### Sea surface height
+
+SSH on 2020/10/01 the estimation was performed.
+Black lines denote the locations of estimated vertical sections.
+
+- Zonal sections:
+  1. Latitude: 32, Longitude: 140-150
+  2. Latitude: 38, Longitude: 150-160
+- Meridional sections:
+  1. Longitude: 144, Latitude: 30-40
+  2. Longitude: 154, Latitude: 30-40
+
+![Fig.4](figs/fig4_20201001_ssh.jpg)
+
+#### Zonal sections
+
+- [Left] Latitude: 32, Longitude: 140-150
+- [Right] Latitude: 38, Longitude: 150-160
+
+![Fig.5](figs/fig5_20201001_zonals.jpg)
+
+#### Meridional sections
+
+- [Left] Longitude: 144, Latitude: 30-40
+- [Right] Longitude: 154, Latitude: 30-40
+
+![Fig.6](figs/fig6_20201001_meridionals.jpg)
+
 ### Conclusion
 
-Our proposed method with Machine Learning (Deep Learning) indicated the potential to estimate internal structures of the ocean by using only sattelite data. Since this deep learning model is relatively simple (fully convolutional backbone and some full connection layers), the direct implementation of physical phenomena into the model is expected to improve the accuracy of the estimation. We treated physical parameters and chlorophyll in the same way, but biogeochemical parameters such as chlorophyll are relatively strongly influenced by smaller scale phenomena. Therefore, building a model that can handle these parameters well will also allow us to estimate the internal structure more accurately.
+Our proposed method with Machine Learning (Deep Learning) indicated the potential to estimate internal structures of the ocean in the meso-scale resolution by using only sattelite data. Since this deep learning model is relatively simple (fully convolutional backbone and some full connection layers), the direct implementation of physical phenomena into the model is expected to improve the accuracy of the estimation. We treated physical parameters and chlorophyll in the same way, but biogeochemical parameters such as chlorophyll are relatively strongly influenced by smaller scale phenomena. Therefore, building a model that can handle these parameters well will also allow us to estimate the internal structure more accurately.
 
 ## System information
 
