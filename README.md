@@ -56,7 +56,9 @@ Our method is supervized training of:
   - Height, temperature and chlorophyll
   - Crop resolution : 4 x 4 degrees
 - Argo prifile
-  - min 10 max 1000 interval 10
+  - Minimum pressure: 10 dbar
+  - Maximum pressure: 1000 dbar
+  - Interpolation interval: 10 dbar
 
 ### Estimated results (prifiles)
 
