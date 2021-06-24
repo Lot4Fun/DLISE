@@ -36,9 +36,7 @@ Our method is supervised training of:
 - Input : Cropped sea surface temperature, height and chlorophyll map data
 - Ground truth : Corresponding vertical profile
 
-## Brief results
-
-### Training setting
+Configurations:
 
 - Common information
   - Latitude : 10 - 40
@@ -59,6 +57,8 @@ Our method is supervised training of:
   - Minimum pressure: 10 dbar
   - Maximum pressure: 1000 dbar
   - Interpolation interval: 10 dbar
+
+## Brief results
 
 ### Estimated results (profiles)
 
