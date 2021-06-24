@@ -4,9 +4,9 @@
 
 Vertical structure in the ocean are related to sea surface features (Ex. height, temperature, chlorophyll, etc). This trial attempts to estimate the vertical structure (temperature and salinity) from sea surface features by Deep Learning. We adapt our proposed method to the region of the North Pacific Subtropical Gyre since sea surface and internal structures vary by location.
 
-We use Argo profile and sea surface height, temperature and chlorophyll. Spatial resolution of sea surface data is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to estimate the difference in the order of meso-scale (~100km). Although this dataset can not resolve submeso-scale impact, shallow layers are more sensitive to the influence of subme-socale dynamics. To take this into account and estimate shallow layer profile more correctly, we use sea surface chlorophyll since it is expected to be relatively influenced by the submeso-scale dynamics.
+We use Argo profile and sea surface height, temperature and chlorophyll. Spatial resolution of sea surface data is 0.25 degree x 0.25 degree and it is not enough to resolve submeso-scale (~10km) phenomenon. Therefore our proposed method aims to estimate the difference in the order of meso-scale (~100km). Although this dataset can not resolve submeso-scale impact, shallow layers are more sensitive to the influence of submeso-scale dynamics. To take this into account and estimate shallow layer profile more correctly, we use sea surface chlorophyll since it is expected to be relatively influenced by the submeso-scale dynamics.
 
-Our prposed method have two contributions: first, our method estimates internal structure with from only sea surface data. Our approach may enables us to obtain more internal structure data with higher frequency and spatial density than can be obtained with the current Argo program. On the other hand, since this method requires a large amount of Argo profiles, our study argues the importance of the Argo program and the need for further development. Second, we show the importance of the application of machine learning on the oceanography. In recent years, although we can get more dataset in the ocean, they are limited in temporal and spatial resolution. To monitoring the state of ocean, satellite observations can provide a wide range of high-frequency data, however they are limited to the sea surface and insufficient to understand the entire ocean. In our study, we will try to link sea surface data by satellite with data of the interior of the ocean. Our method indicates the potential to obtain more frequent and dense data in the interior of the ocean, and we hope to gain a more detailed understanding of the ocean.
+Our proposed method has two contributions: first, our method estimates internal structure with only sea surface data. Our approach may enable us to obtain more internal structure data with higher frequency and spatial density than can be obtained with the current Argo program. On the other hand, since this method requires a large amount of Argo profiles, our study argues the importance of the Argo program and the need for further development. Second, we show the importance of the application of machine learning on the oceanography. In recent years, although we can get more dataset in the ocean, they are limited in temporal and spatial resolution. To monitor the state of the ocean, satellite observations can provide a wide range of high-frequency data, however they are limited to the sea surface and insufficient to understand the entire ocean. In our study, we will try to link sea surface data by satellite with data of the interior of the ocean. Our method indicates the potential to obtain more frequent and dense data in the interior of the ocean, and we hope to gain a more detailed understanding of the ocean.
 
 ## Dataset
 
@@ -24,16 +24,16 @@ We use following datasets:
   - We interpolate profile data by Akima spline
 - Other information
   - Location (latitude and longitude)
-    - State of the ocean are strongly related to the location. For example, low temperature in high latitudes, high temperature in low latitudes.
+    - State of the ocean is strongly related to the location. For example, low temperature in high latitudes, high temperature in low latitudes.
   - Temporal (seasonal) information (__NOT EXPLICITLY IMPLEMENTED__)
     - Since the oceans have seasonal variability, it is impossible to determine whether the differences are temporal or spatial without taking into account temporal information.
     - __Since the combination of latitude, longitude and sea surface data is considered to indirectly contain temporal information, we do not explicitly implemented it.__
 
 ## Training information
 
-Our method is supervized training of:
+Our method is supervised training of:
 
-- Input : Crroped sea surface temperature, height and chlorophyll map data
+- Input : Cropped sea surface temperature, height and chlorophyll map data
 - Ground truth : Corresponding vertical profile
 
 ## Brief results
@@ -60,7 +60,7 @@ Our method is supervized training of:
   - Maximum pressure: 1000 dbar
   - Interpolation interval: 10 dbar
 
-### Estimated results (prifiles)
+### Estimated results (profiles)
 
 In this section, we compare profiles of ground truth and estimated.
 
@@ -79,9 +79,9 @@ The two graphs on the left can not estimate the changes in the shallow layers. O
 
 ![Fig.2](figs/fig2_bad1.png)
 
-We show slightly different difficulties. Although the above four graphs indicated incorrect estimations, following results show the difficulties of small scale dyamics. The two graphs on the left can not estimate small scale changes in the layer shallower than 400 dbar. Two graphs on the right shows smaller scale changes in the layer above 200 dbar.
+We show slightly different difficulties. Although the above four graphs indicated incorrect estimations, following results show the difficulties of small scale dynamics. The two graphs on the left can not estimate small scale changes in the layer shallower than 400 dbar. Two graphs on the right shows smaller scale changes in the layer above 200 dbar.
 
-As mentioned in the overview section, the spatial resolution of satellite data is 0.25 x 0.25 degrees, and since our target is to correctly estimate mesoscale variability, estimating such small scale variabiliiesy is considered difficult by current satellite data.
+As mentioned in the overview section, the spatial resolution of satellite data is 0.25 x 0.25 degrees, and since our target is to correctly estimate meso-scale variability, estimating such small scale variability is considered difficult by current satellite data.
 
 ![Fig.3](figs/fig3_bad2.png)
 
@@ -117,7 +117,7 @@ Black lines denote the locations of estimated vertical sections.
 
 ### Conclusion
 
-Our proposed method with Machine Learning (Deep Learning) indicated the potential to estimate internal structures of the ocean in the meso-scale resolution by using only sattelite data. Since this deep learning model is relatively simple (fully convolutional backbone and some full connection layers), the direct implementation of physical phenomena into the model is expected to improve the accuracy of the estimation. We treated physical parameters and chlorophyll in the same way, but biogeochemical parameters such as chlorophyll are relatively strongly influenced by smaller scale phenomena. Therefore, building a model that can handle these parameters well will also allow us to estimate the internal structure more accurately.
+Our proposed method with Machine Learning (Deep Learning) indicated the potential to estimate internal structures of the ocean in the meso-scale resolution by using only satellite data. Since this deep learning model is relatively simple (fully convolutional backbone and some full connection layers), the direct implementation of physical phenomena into the model is expected to improve the accuracy of the estimation. We treated physical parameters and chlorophyll in the same way, but biogeochemical parameters such as chlorophyll are relatively strongly influenced by smaller scale phenomena. Therefore, building a model that can handle these parameters well will also allow us to estimate the internal structure more accurately.
 
 ## System information
 
@@ -125,11 +125,11 @@ Our proposed method with Machine Learning (Deep Learning) indicated the potentia
 
 - Docker 20.10.7
 
-In addition to above system requeirements, you need to create [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) account and get login ID and PASSWORD.
+In addition to above system requirements, you need to create [Copernicus Marine Environment Monitoring Service (CMEMS)](https://marine.copernicus.eu/) account and get login ID and PASSWORD.
 
 ### Installation
 
-This repogitory will run on the Docker container.
+This repository will run on the Docker container.
 
 #### Build Docker image
 
@@ -142,7 +142,7 @@ docker build -t dlise .
 #### Run Docker container
 
 ```bash
-# If you need to download data, need to make directory to store downloaded data.
+# If you need to download data, you need to make a directory to store downloaded data.
 mkdir -p /archive/DLISE
 # Run and enter the container.
 docker run -it --gpus all --rm -v /PATH/TO/DLISE/:/DLISE/ -v /archive/DLISE/:/archive/DLISE/ dlise /bin/bash
@@ -165,7 +165,7 @@ Only the following patterns to load trained weights are supported.
 
 #### Download dataset
 
-Change configuratoin in [`tools/download_dataset.sh`](https://github.com/pystokes/DLISE/blob/master/tools/download_dataset.sh). See the shellscript file for examples.
+Change configuration in [`tools/download_dataset.sh`](https://github.com/pystokes/DLISE/blob/master/tools/download_dataset.sh). See the shellscript file for examples.
 
 ```bash
 # Config: General (Home directory to save downloaded data)
@@ -190,7 +190,7 @@ argo_urls='
 '
 ```
 
-Run following command. If you need to download CMEMS dataset, enter CMEMS ID and PASSWORD.
+Run the following command. If you need to download the CMEMS dataset, enter the CMEMS ID and PASSWORD.
 
 ```bash
 cd DLISE/tools
@@ -200,7 +200,7 @@ CMEMS ID: YOUR_ID
 CMEMS Password: YOUR_PASWORD
 ```
 
-After running the above command, you can see directory structure in the specified save directory like below.
+After running the above command, you can see the directory structure in the specified save directory like below.
 
 ```text
 {SAVE_HOME}
@@ -238,7 +238,7 @@ After running the above command, you can see directory structure in the specifie
     python execute.py preprocess
     ```
 
-    After running the above command, you can see directory structure in the specified save directory like below.
+    After running the above command, you can see the directory structure in the specified save directory like below.
 
     ```text
     {SAVE_HOME}
@@ -328,7 +328,7 @@ After running the above command, you can see directory structure in the specifie
 
 #### Evaluation
 
-1. Modify `Requirements` and other parameters in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py). Input directory is the directory created in train phase.
+1. Modify `Requirements` and other parameters in [config.py](https://github.com/pystokes/DLISE/blob/master/config.py). Input directory is the directory created in the train phase.
 
     ```python
     # Requirements : evaluate
@@ -352,7 +352,7 @@ After running the above command, you can see directory structure in the specifie
 
 #### Prediction
 
-1. Set path to trained weights at the `trained_weight_path` in the `config.json` created in train phase.
+1. Set path to trained weights at the `trained_weight_path` in the `config.json` created in the train phase.
 
     ```json
     "predict": {
